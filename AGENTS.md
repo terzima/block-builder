@@ -174,6 +174,18 @@ Before completion:
 
 `docs/intake/PROJECT_OVERVIEW_RAW.md` is source material. Do not load it routinely during implementation. Use seeded docs and active specs/plans instead.
 
+## Template discipline
+
+Specs, plans, and batch plans should contain task-specific implementation truth, not copies of this file.
+
+- Use the repo-local `controlled-planning-docs` skill when writing or revising specs, plans, or batch plans.
+- Reference `AGENTS.md` for operating modes, permissions, approval classes, git rules, hooks, and Change Requests.
+- Put mission-critical reusable rules in `AGENTS.md`; put task-local contracts, interfaces, fixtures, and commands in the spec/plan/batch.
+- Delete template prompts and non-applicable sections before accepting a document.
+- Prefer concise tables, exact file/function/API contracts, and focused task slices over broad prose.
+- Plans should be executable without redesign: name files, public interfaces, validation commands, expected outputs, and stop conditions.
+- Do not paste large source material or long generated logs into specs/plans. Link to durable files and summarize only what implementation needs.
+
 ## Permission Policy
 
 The agent should avoid asking for approval for routine safe repo-local work.

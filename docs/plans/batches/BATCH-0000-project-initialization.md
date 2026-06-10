@@ -1,191 +1,74 @@
-# BATCH-0000 — Project Initialization
+# BATCH-0000 - Project Initialization
+
+Status: Draft
+Approval Class: A1
+Batch Type: Documentation
+User-testable: No
+Human gate: No
 
 ## Purpose
 
-Convert the project vision, brainstorming artifacts, raw specifications,
-research notes, and historical discussions into controlled project
-documentation that can serve as the foundation for implementation.
+Convert raw project source material into controlled project documentation, architecture direction, first specs/plans, and a roadmap. This batch produces no application code.
 
-No application code should be written during this batch.
+## Included work
 
----
+| Type | File | Role |
+|---|---|---|
+| Spec | `docs/specs/SPEC-0000-project-foundation.md` | Foundation requirements and boundaries. |
+| Plan | `docs/plans/PLAN-0000-repo-bootstrap.md` | Repo/bootstrap control-plane work. |
+| ADR | `docs/adr/ADR-0000-architecture-direction.md` | Initial architecture direction. |
 
-## Approval Class
+## Scope summary
 
-A1 — Batch approval only.
+### In scope
 
----
+- Project charter, glossary, repo map, roadmap, seed results, and worklog.
+- Foundation spec and initial implementation slice identification.
+- Architecture direction if clearly implied by source material.
 
-## Human Gate
+### Out of scope
 
-No.
+- Application code.
+- Production services or business logic.
+- Dependency installation.
+- Deployment or infrastructure.
 
-This batch is documentation, architecture, and project-definition work
-only. No user-testable behavior is expected.
+## Execution contract
 
----
+- Agent may continue automatically: Yes
+- Dependency/network approval required before start: No
+- Human checkpoint timing: none for this docs-only batch.
+- Special constraints beyond `AGENTS.md`: do not routinely load the raw overview during later implementation.
 
-## Goals
+## Required checks
 
-Produce the initial source-of-truth project documents.
+```bash
+git status --short
+bash scripts/agent/agent_preflight.sh
+git diff --check
+```
 
-Establish:
+## Human checks
 
-- project scope
-- project vocabulary
-- project architecture direction
-- implementation boundaries
-- success criteria
-- initial implementation roadmap
+- None.
 
----
+## Stop conditions
 
-## Inputs
+- Raw overview contradictions block useful decomposition.
+- Major architecture choices are required but not present or strongly implied.
+- Work would require application code, dependencies, network access, or files outside approved docs.
 
-The agent may use:
+## Commit strategy
 
-- raw project specification
-- project brainstorming documents
-- prior design discussions
-- research material
-- user-provided requirements
+- Suggested local commit: `docs(seed): add project decomposition`
+- Remote push/PR: requires explicit approval.
 
----
+## Final report
 
-## Required Outputs
+Report:
 
-### Project Charter
-
-Create:
-
-docs/project-charter.md
-
-Must define:
-
-- project purpose
-- target users
-- goals
-- non-goals
-- success metrics
-- constraints
-
----
-
-### Foundation Spec
-
-Create:
-
-docs/specs/SPEC-0000-project-foundation.md
-
-Must define:
-
-- problem statement
-- objectives
-- requirements
-- acceptance criteria
-- project boundaries
-
----
-
-### Architecture Direction
-
-Create:
-
-docs/adr/ADR-0000-architecture-direction.md
-
-Must define:
-
-- system shape
-- major components
-- technology choices
-- architectural constraints
-
----
-
-### Glossary
-
-Create:
-
-docs/glossary.md
-
-Must define:
-
-- domain terminology
-- project terminology
-- acronyms
-
----
-
-### Repo Map
-
-Create:
-
-docs/repo-map.md
-
-Must define:
-
-- major directories
-- responsibilities
-- architectural boundaries
-
----
-
-### Initial Batch Roadmap
-
-Create:
-
-docs/roadmap.md
-
-Must define:
-
-- BATCH-0001
-- BATCH-0002
-- BATCH-0003
-- anticipated future batches
-
----
-
-## Explicit Non-Goals
-
-The agent must not:
-
-- write application code
-- create production services
-- create business logic
-- install dependencies
-- deploy infrastructure
-
----
-
-## Automated Gate
-
-Batch completion requires:
-
-- all required documents exist
-- document cross-references are valid
-- terminology is consistent
-- architecture direction is documented
-- roadmap exists
-
----
-
-## Stop Conditions
-
-Stop if:
-
-- major architectural decisions remain unresolved
-- project goals are ambiguous
-- contradictory requirements exist
-- additional user clarification is required
-
----
-
-## Final Batch Output
-
-Provide:
-
-1. Documents created.
-2. Open questions.
-3. Assumptions made.
-4. Proposed implementation batches.
+1. Documents created or updated.
+2. Specs/plans/batches created.
+3. Assumptions and open questions.
+4. Checks run and skipped.
 5. Recommended first implementation batch.
