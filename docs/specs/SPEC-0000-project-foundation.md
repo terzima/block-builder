@@ -1,7 +1,8 @@
 # SPEC-0000: Project Foundation
 
-Status: Draft
-Maturity: M1/M2
+Status: Completed
+Approval Class: A1
+Maturity: M2
 Owner: Unassigned
 Created: 2026-06-10
 Updated: 2026-06-10
@@ -11,13 +12,13 @@ Related Change Requests: None
 
 ## Context
 
-- Source docs: `AGENTS.md`, `docs/intake/PROJECT_OVERVIEW_RAW.md`
-- Current evidence: the repo has governance/docs scaffold and no application code.
-- Why this slice now: future implementation needs stable source-of-truth docs so agents do not repeatedly load the raw overview.
+- Source docs: `AGENTS.md`, `docs/intake/PROJECT_OVERVIEW_RAW.md`.
+- Current evidence: governance docs, seeded project docs, architecture direction, and the behavior-free application scaffold now exist.
+- Why this slice existed: future implementation needed stable source-of-truth docs so agents would not repeatedly load the raw overview.
 
 ## Problem
 
-The raw game overview must be converted into controlled project context, boundaries, and the first implementable slices without prematurely specifying the entire product.
+The raw game overview needed to be converted into controlled project context, boundaries, and the first implementable slices without prematurely specifying the entire product.
 
 ## Goals
 
@@ -27,15 +28,15 @@ The raw game overview must be converted into controlled project context, boundar
 
 ## Non-goals
 
-- Writing application code.
-- Fully planning all 100 levels.
-- Choosing hosting, analytics, accounts, or final art direction.
+- Deliver product behavior.
+- Fully plan all 100 levels.
+- Choose hosting, analytics, accounts, or final art direction.
 
 ## Users / actors
 
 - Project owner: reviews scope, playability, and future product decisions.
 - Agentic implementer: follows accepted specs/plans without rereading the raw overview.
-- Local player: validates the first playable milestone.
+- Local player: validates later playable milestones.
 
 ## Behavioral contract
 
@@ -45,11 +46,11 @@ The raw game overview must be converted into controlled project context, boundar
 
 ## Interface and data contract
 
-- Files or modules: project docs under `docs/`; no application modules.
+- Files or modules: project docs under `docs/`; no product modules were required by this foundation slice.
 - Public functions/classes: none.
 - API routes/events: none.
-- Data shapes/schemas: future shared contract is specified in `SPEC-0001`.
-- Config keys/env vars: future `.env.example` is specified in `SPEC-0001`.
+- Data shapes/schemas: shared contract ownership is specified by `SPEC-0001` and later feature specs.
+- Config keys/env vars: `.env.example` ownership is specified by `SPEC-0001`.
 - Error codes/messages: none.
 
 ## Requirements
@@ -57,24 +58,24 @@ The raw game overview must be converted into controlled project context, boundar
 ### Functional
 
 - FR-1: `docs/project-charter.md`, `docs/glossary.md`, `docs/repo-map.md`, and `docs/roadmap.md` summarize the project for future agents.
-- FR-2: `docs/specs/SPEC-0001-application-scaffold.md` is the first implementation-safe spec.
-- FR-3: Early specs/plans cover only scaffold, backend level APIs, and the first playable frontend slice.
+- FR-2: `docs/specs/SPEC-0001-application-scaffold.md` defines the first implementation-safe scaffold spec.
+- FR-3: Early specs/plans cover scaffold, backend level APIs, and the first playable frontend slice only.
 - FR-4: Future and speculative work remains in roadmap/spec-candidate form.
 - FR-5: Architecture direction is recorded because the raw overview fixes stack and component ownership.
 
 ### Non-functional
 
 - Performance: not applicable.
-- Security/privacy: no secrets or user data are introduced.
+- Security/privacy: no secrets or user data are introduced by the foundation docs.
 - Accessibility: first UI accessibility belongs to `SPEC-0003`.
-- Observability: docs must identify validation commands and stop conditions.
+- Observability: docs identify validation commands and stop conditions.
 - Maintainability: docs avoid repeating `AGENTS.md` policy.
 
 ## Dependencies and approvals
 
 - Prerequisite specs/plans: none.
 - Existing files to read first: `AGENTS.md`, `docs/intake/PROJECT_OVERVIEW_RAW.md`.
-- Approval-required actions: none for docs-only foundation work.
+- Approval-required actions: none for this docs-only foundation work.
 
 ## Acceptance gates
 
@@ -99,7 +100,7 @@ git diff --check
 
 - Risk: future agents over-read the raw overview.
   - Mitigation: use project charter, repo map, active spec, and active plan as normal context.
-- Open question: which future test runner, hosting target, art direction, and level-generation strategy will be selected later?
+- Open questions: future test runner, hosting target, art direction, and level-generation strategy remain deferred to later specs.
 
 ## Stop conditions
 

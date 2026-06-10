@@ -53,6 +53,26 @@ L2 only when needed:
 
 Do not load unrelated files into context. Do not read the whole repo unless the task is explicitly architectural or the relevant area is unknown.
 
+## Context Handoff Policy
+
+The repo must be resumable from files, not chat history.
+
+New agent sessions should start by reading:
+
+1. `AGENTS.md`
+2. `docs/repo-map.md`
+3. `docs/status/CURRENT_STATE.md`
+4. The active spec/plan/batch listed in `docs/status/CURRENT_STATE.md`
+5. Directly relevant source files
+
+At the end of every meaningful implementation session, the agent must update `docs/status/CURRENT_STATE.md`.
+
+If work is incomplete, interrupted, blocked, or complex enough that the next agent needs a restart package, the agent must create or update a handoff file under `docs/handoff/`.
+
+Handoff files must be concise and must not duplicate full specs, plans, diffs, or chat history.
+
+Store what changes future action, not everything that happened.
+
 ## Bare implementation output
 
 During Implementation mode, do not narrate routine steps. Report only:
@@ -163,6 +183,8 @@ Before completion:
 
 - `docs/project-charter.md`: stable product/project summary.
 - `docs/repo-map.md`: architecture map and commands.
+- `docs/status/CURRENT_STATE.md`: active project dashboard and next-action context.
+- `docs/handoff/`: concise restart packages for incomplete, interrupted, blocked, or complex work.
 - `docs/specs/`: accepted/draft requirements.
 - `docs/plans/`: implementation plans.
 - `docs/change-requests/`: controlled scope changes.

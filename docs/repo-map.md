@@ -12,6 +12,9 @@ This repository currently contains the controlled documentation and agent-govern
 
 - `AGENTS.md`: required operating modes, change control, permission policy, and quality gates.
 - `docs/`: project charter, glossary, roadmap, specs, plans, ADRs, standards, worklogs, and intake material.
+- `docs/status/CURRENT_STATE.md`: active project dashboard for future session startup.
+- `docs/handoff/`: concise handoff notes for incomplete, interrupted, blocked, or complex work.
+- `docs/worklog/`: session notes and durable discoveries.
 - `scripts/agent/`: deterministic helper scripts for preflight, policy checks, seeding, and finalization.
 - `.githooks/`: local Git hooks. Do not bypass with `--no-verify` unless explicitly approved.
 - `.github/`: repository policy, pull request, and CI/dependency-review scaffold.
@@ -78,12 +81,10 @@ tools/
 ## Files future agents should read first
 
 - `AGENTS.md`
-- `docs/project-charter.md`
-- `docs/roadmap.md`
-- `docs/specs/SPEC-0000-project-foundation.md`
-- The active spec in `docs/specs/`
-- The active plan in `docs/plans/`
-- `docs/adr/ADR-0000-architecture-direction.md`
+- `docs/repo-map.md`
+- `docs/status/CURRENT_STATE.md`
+- The active spec, plan, and batch listed in `docs/status/CURRENT_STATE.md`
+- Directly relevant source files for the active task
 
 ## Files future agents should not casually modify
 

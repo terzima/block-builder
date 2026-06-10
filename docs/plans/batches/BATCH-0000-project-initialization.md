@@ -1,6 +1,6 @@
 # BATCH-0000 - Project Initialization
 
-Status: Draft
+Status: Completed
 Approval Class: A1
 Batch Type: Documentation
 User-testable: No
@@ -8,14 +8,14 @@ Human gate: No
 
 ## Purpose
 
-Convert raw project source material into controlled project documentation, architecture direction, first specs/plans, and a roadmap. This batch produces no application code.
+This historical batch converted raw project source material into controlled project documentation, architecture direction, first specs/plans, and a roadmap. It produced no product behavior.
 
 ## Included work
 
 | Type | File | Role |
 |---|---|---|
-| Spec | `docs/specs/SPEC-0000-project-foundation.md` | Foundation requirements and boundaries. |
-| Plan | `docs/plans/PLAN-0000-repo-bootstrap.md` | Repo/bootstrap control-plane work. |
+| Spec | `docs/specs/SPEC-0000-project-foundation.md` | Completed foundation requirements and boundaries. |
+| Plan | `docs/plans/PLAN-0000-repo-bootstrap.md` | Completed repo/bootstrap control-plane work. |
 | ADR | `docs/adr/ADR-0000-architecture-direction.md` | Initial architecture direction. |
 
 ## Scope summary
@@ -24,27 +24,36 @@ Convert raw project source material into controlled project documentation, archi
 
 - Project charter, glossary, repo map, roadmap, seed results, and worklog.
 - Foundation spec and initial implementation slice identification.
-- Architecture direction if clearly implied by source material.
+- Architecture direction clearly implied by source material.
 
 ### Out of scope
 
-- Application code.
+- Application behavior.
 - Production services or business logic.
 - Dependency installation.
 - Deployment or infrastructure.
 
 ## Execution contract
 
-- Agent may continue automatically: Yes
-- Dependency/network approval required before start: No
-- Human checkpoint timing: none for this docs-only batch.
-- Special constraints beyond `AGENTS.md`: do not routinely load the raw overview during later implementation.
+- Agent may continue automatically: No, because this batch is complete.
+- Dependency/network approval required before start: No.
+- Human checkpoint timing: none for this docs-only historical batch.
+- Special constraints: later implementation should use seeded docs, active specs, and active plans rather than routinely loading raw intake material.
 
 ## Required checks
+
+Historical validation for this completed batch:
 
 ```bash
 git status --short
 bash scripts/agent/agent_preflight.sh
+git diff --check
+```
+
+Current revalidation for batch remediation:
+
+```bash
+python3 .agents/skills/controlled-planning-docs/scripts/check_planning_doc.py docs/plans/batches/BATCH-0000-project-initialization.md
 git diff --check
 ```
 
@@ -54,21 +63,19 @@ git diff --check
 
 ## Stop conditions
 
-- Raw overview contradictions block useful decomposition.
-- Major architecture choices are required but not present or strongly implied.
-- Work would require application code, dependencies, network access, or files outside approved docs.
+- New product behavior is proposed under this completed batch.
+- A policy, CI, dependency, deployment, or application-code change is requested without a current accepted spec/plan.
 
 ## Commit strategy
 
-- Suggested local commit: `docs(seed): add project decomposition`
-- Remote push/PR: requires explicit approval.
+- Historical suggested local commit: `docs(seed): add project decomposition`
+- Current remediation commit, if committed separately: `docs(plan): mark bootstrap batch completed`
 
 ## Final report
 
 Report:
 
-1. Documents created or updated.
-2. Specs/plans/batches created.
-3. Assumptions and open questions.
-4. Checks run and skipped.
-5. Recommended first implementation batch.
+1. Historical status.
+2. Documents confirmed as completed.
+3. Checks run.
+4. Active next batch recommendation.

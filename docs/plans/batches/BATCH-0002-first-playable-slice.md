@@ -1,48 +1,53 @@
-# BATCH-0002 - First Playable Slice
+# BATCH-0002 - Backend Levels API
 
 Status: Draft
 Approval Class: A3
-Batch Type: User-Testable
-User-testable: Yes
-Human gate: Yes
+Batch Type: Backend API
+User-testable: No
+Human gate: No after dependency approval
 
 ## Purpose
 
-Implement the first local playable version: FastAPI config/static/levels APIs plus vanilla JavaScript gameplay/UI for levels 1-5.
+Execute the backend prerequisite for the first playable slice: approved Python dependencies, FastAPI config/static/levels APIs, exact first-five level data, validator, and backend tests.
+
+Filename note: this file previously bundled the entire first playable slice. It now represents only the backend/API batch so dependency approval and frontend UX review are not mixed in one execution gate.
 
 ## Included work
 
 | Type | File | Role |
 |---|---|---|
-| Spec | `docs/specs/SPEC-0002-backend-levels-api.md` | Backend API and validation requirements. |
-| Plan | `docs/plans/PLAN-0002-backend-levels-api.md` | Backend executable tasks and checks. |
-| Spec | `docs/specs/SPEC-0003-frontend-gameplay-ui.md` | Frontend gameplay/UI requirements. |
-| Plan | `docs/plans/PLAN-0003-frontend-gameplay-ui.md` | Frontend executable tasks and checks. |
+| Spec | `docs/specs/SPEC-0002-backend-levels-api.md` | Accepted backend API and validation requirements. |
+| Plan | `docs/plans/PLAN-0002-backend-levels-api.md` | M4 backend executable tasks, dependency stop point, fixtures, and checks. |
 | ADR | `docs/adr/ADR-0000-architecture-direction.md` | Stack and component ownership. |
 
 ## Scope summary
 
 ### In scope
 
-- Approved backend dependency declaration/install.
-- FastAPI health/config/static/levels APIs and validator.
-- First-five level data and backend tests.
-- Vanilla JS contract/API/engine/physics/renderer/input/storage/UI modules.
-- JS engine/physics tests or approved no-dependency harness.
-- Manual completion of levels 1-5.
+- A3 dependency/network approval request and approved dependency declaration.
+- FastAPI module-level `app`.
+- Public config, health, static root, shared contract, levels list, and level detail routes.
+- Exact first-five level fixture from `PLAN-0002`.
+- Level validation service and CLI.
+- Backend API and validation tests.
+- README and repo-map backend command updates.
 
 ### Out of scope
 
-- Levels 6-100, generator/solver beyond validator.
-- Sound, music, analytics, accounts, cloud saves, leaderboards.
-- Production deployment, hosting, TLS, frontend frameworks, build steps, CI changes unless separately approved.
+- Frontend gameplay or UI behavior.
+- Optional progress API.
+- Levels 6-100, generator, solver, accounts, cloud saves, analytics, deployment, hosting, TLS, CI changes, frontend frameworks, build steps, and lockfiles unless separately approved.
 
 ## Execution contract
 
-- Agent may continue automatically: only after dependency/network approvals are granted, and only until the first playable checkpoint.
-- Dependency/network approval required before start: Yes.
-- Human checkpoint timing: after the app runs locally and levels 1-5 are completable.
-- Special constraints beyond `AGENTS.md`: backend must not own gameplay moves; frontend must construct routes from the shared contract.
+- Agent may continue automatically: only after A3 dependency/network approval is granted.
+- Dependency/network approval required before start: Yes, before dependency manifest edits or install commands.
+- Human checkpoint timing: none after dependency approval because API/validation behavior is machine-verifiable.
+- Special constraints:
+  - Use `PLAN-0002` exact level JSON.
+  - Keep backend out of gameplay state transitions.
+  - Do not register progress routes.
+  - Do not proceed into `PLAN-0003` frontend work under this batch.
 
 ## Required checks
 
@@ -52,34 +57,32 @@ python3 -m json.tool shared/app_contract.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
 python tools/validate_levels.py
 pytest tests/test_api.py tests/test_level_validation.py
-node tests/js/run-tests.mjs
 git diff --check
 git diff --stat
 git diff
 ```
 
-If `node` is unavailable or a JS runner is not accepted, document the skipped automated JS check and use the accepted fallback/manual check.
+Expected evidence:
+
+- Validator prints `Validated 5 levels from backend/app/data/levels.json`.
+- Pytest exits `0`.
+- No lockfile is created unless separately approved.
 
 ## Human checks
 
-- Play levels 1-5 locally.
-- Review reset, undo, invalid feedback, completion flow, progress persistence, and desktop/mobile-width layout.
+- None after dependency approval.
 
 ## Stop conditions
 
-- Dependency/network approval is denied.
-- Accepted gameplay rules need to change.
-- A frontend dependency/framework/build step is needed.
-- Levels 1-5 are not completable under accepted mechanics.
-- Product/UX judgment is required before proceeding.
-- A file outside included specs/plans must be modified.
+- A3 dependency/network approval is denied.
+- Package/version choices need to change.
+- API paths must diverge from `shared/app_contract.json`.
+- Level data requires gameplay-rule changes.
+- Frontend gameplay, progress API, CI, deployment, secrets, external services, or files outside `PLAN-0002` become necessary.
 
 ## Commit strategy
 
-- Suggested local commits:
-  - `feat(backend): add levels API`
-  - `test(frontend): add engine and physics checks`
-  - `feat(frontend): add playable puzzle UI`
+- Suggested local commit: `feat(backend): add levels API`
 - Remote push/PR: requires explicit approval.
 
 ## Final report
@@ -87,10 +90,10 @@ If `node` is unavailable or a JS runner is not accepted, document the skipped au
 Report:
 
 1. Batch status.
-2. Specs/plans completed.
+2. A3 dependency approval outcome.
 3. Files changed.
-4. Checks run and skipped.
-5. Manual playthrough results for levels 1-5.
-6. Deviations and Change Requests.
-7. Remaining risks.
-8. Recommended next batch.
+4. Exact backend routes implemented.
+5. Validator and pytest results.
+6. Lockfile status.
+7. Deviations and Change Requests.
+8. Whether `BATCH-0003` is unblocked.

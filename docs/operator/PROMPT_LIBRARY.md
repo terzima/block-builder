@@ -370,45 +370,102 @@ Return:
 
 ## 3. Spec prompt
 
-```txt
-Mode: Spec only.
-Use docs/specs/_template.md.
-Do not write code.
-Do not write a plan.
+Mode: Spec.
 
-Input:
-[brief task]
+We are in `/Users/slouis/Development/apps/block-builder`.
 
-Return a new SPEC file with:
-- problem statement
-- goals
-- non-goals
-- user-visible behavior
-- technical constraints
-- acceptance criteria
-- out-of-scope items
-- open questions
-```
+Use the repo-local `controlled-planning-docs` skill at `.agents/skills/controlled-planning-docs/SKILL.md`.
+
+Goal: remediate the remaining specs so they meet the spec-writing standard and can support M4 plans without invention.
+
+Read only:
+- `AGENTS.md`
+- `.agents/skills/controlled-planning-docs/SKILL.md`
+- `.agents/skills/controlled-planning-docs/references/spec-writing.md`
+- `docs/repo-map.md`
+- `docs/adr/ADR-0000-architecture-direction.md`
+- `shared/app_contract.json`
+- `README.md`
+- `docs/specs/SPEC-0000-project-foundation.md`
+- `docs/specs/SPEC-0002-backend-levels-api.md`
+- `docs/specs/SPEC-0003-frontend-gameplay-ui.md`
+
+Do not edit plans, batches, application code, hooks, dependencies, lockfiles, CI, deployment, or generated files.
+
+Tasks:
+1. Mark `SPEC-0000` as historical/completed if appropriate and remove stale “no application scaffold exists” implications.
+2. Harden `SPEC-0002`:
+   - exact API response shapes,
+   - exact schema fields and invariants,
+   - exact structured error envelope,
+   - exact validation rules,
+   - progress API explicitly in or out of scope,
+   - dependency approval class/rationale,
+   - remove routine reliance on raw overview.
+3. Harden `SPEC-0003`:
+   - exact gameplay rules for movement, jump, pickup/place, carry, gravity, undo, reset, completion, invalid actions,
+   - exact runtime state/action names,
+   - exact UI/accessibility expectations,
+   - clarify human checkpoint and approval class,
+   - identify any needed shared contract change as a Change Request or explicit spec requirement.
+
+Run:
+```bash
+python3 .agents/skills/controlled-planning-docs/scripts/check_planning_doc.py docs/specs/SPEC-0000-project-foundation.md docs/specs/SPEC-0002-backend-levels-api.md docs/specs/SPEC-0003-frontend-gameplay-ui.md
+git diff --check
+git diff --stat
+git diff
 
 ## 4. Plan prompt
 
+
+**Prompt 2: Plan And Batch Remediation**
 ```txt
-Mode: Plan only.
-Use docs/plans/_template.md.
-Do not edit code.
-Do not change the accepted spec.
+Mode: Plan.
 
-Accepted spec:
-[spec path]
+We are in `/Users/slouis/Development/apps/block-builder`.
 
-Return a plan with:
-1. Exact file change list.
-2. Ordered implementation steps.
-3. Test plan.
-4. Documentation plan.
-5. Rollback plan.
-6. Stop conditions requiring a Change Request.
-```
+Use the repo-local `controlled-planning-docs` skill.
+
+Goal: harden the remaining plans and batches after the spec remediation.
+
+Read only:
+- `AGENTS.md`
+- `.agents/skills/controlled-planning-docs/SKILL.md`
+- `.agents/skills/controlled-planning-docs/references/plan-hardening.md`
+- `.agents/skills/controlled-planning-docs/references/batch-writing.md`
+- `docs/repo-map.md`
+- `docs/specs/SPEC-0000-project-foundation.md`
+- `docs/specs/SPEC-0002-backend-levels-api.md`
+- `docs/specs/SPEC-0003-frontend-gameplay-ui.md`
+- `docs/plans/PLAN-0000-repo-bootstrap.md`
+- `docs/plans/PLAN-0002-backend-levels-api.md`
+- `docs/plans/PLAN-0003-frontend-gameplay-ui.md`
+- `docs/plans/batches/BATCH-0000-project-initialization.md`
+- `docs/plans/batches/BATCH-0002-first-playable-slice.md`
+
+Do not edit specs or application code.
+
+Tasks:
+1. Mark `PLAN-0000` / `BATCH-0000` historical/completed if appropriate.
+2. Harden `PLAN-0002` to M4:
+   - exact files,
+   - exact function/class contracts,
+   - exact test fixtures/assertions,
+   - exact dependency approval stop point,
+   - exact commands and expected outputs.
+3. Harden or split `PLAN-0003` only as far as the accepted `SPEC-0003` supports.
+4. Rewrite `BATCH-0002` so it does not bundle incompatible approval classes:
+   - backend dependency/API batch,
+   - frontend first-playable/user-testable batch,
+   - explicit human gate only where UX/product judgment is required.
+
+Run:
+```bash
+python3 .agents/skills/controlled-planning-docs/scripts/check_planning_doc.py docs/plans/PLAN-0000-repo-bootstrap.md docs/plans/PLAN-0002-backend-levels-api.md docs/plans/PLAN-0003-frontend-gameplay-ui.md docs/plans/batches/BATCH-0000-project-initialization.md docs/plans/batches/BATCH-0002-first-playable-slice.md
+git diff --check
+git diff --stat
+git diff
 
 ## 5. Implementation prompt
 
