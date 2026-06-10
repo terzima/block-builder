@@ -1,0 +1,56 @@
+{
+  "version": "0.1.0",
+  "appName": "Block Builder",
+  "api": {
+    "origin": "",
+    "prefix": "/api/v1",
+    "routes": {
+      "health": "/health",
+      "config": "/config",
+      "levels": "/levels",
+      "levelById": "/levels/{levelId}",
+      "progress": "/progress"
+    }
+  },
+  "static": {
+    "frontendRoot": "frontend",
+    "entrypoint": "index.html",
+    "stylesheet": "style.css"
+  },
+  "tiles": {
+    "empty": ".",
+    "wall": "#",
+    "player": "P",
+    "block": "B",
+    "goal": "G"
+  },
+  "actions": {
+    "moveLeft": "moveLeft",
+    "moveRight": "moveRight",
+    "jump": "jump",
+    "reset": "reset",
+    "undo": "undo",
+    "selectLevel": "selectLevel"
+  },
+  "keyboard": {
+    "moveLeft": ["ArrowLeft", "KeyA"],
+    "moveRight": ["ArrowRight", "KeyD"],
+    "jump": ["ArrowUp", "KeyW", "Space"],
+    "reset": ["KeyR"],
+    "undo": ["KeyZ"]
+  },
+  "storageKeys": {
+    "progress": "block-builder:progress",
+    "settings": "block-builder:settings"
+  },
+  "gameplay": {
+    "implementationStatus": "deferred",
+    "engineOwner": "frontend",
+    "stateModel": "grid"
+  },
+  "ui": {
+    "implementationStatus": "deferred",
+    "rendererOwner": "frontend",
+    "rootElementId": "app"
+  }
+}

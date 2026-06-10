@@ -9,6 +9,9 @@
 *.crt
 secrets.*
 
+# Local app data
+.local/
+
 # OS/editor
 .DS_Store
 Thumbs.db
