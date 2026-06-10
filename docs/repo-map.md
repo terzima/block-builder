@@ -1,7 +1,7 @@
 # Repo Map
 
-Status: Seeded
-Maturity: M1/M2
+Status: Backend implemented (BATCH-0002 complete)
+Maturity: M3
 Last updated: 2026-06-10
 
 ## Purpose
@@ -103,19 +103,35 @@ git status --short
 bash scripts/agent/agent_preflight.sh
 bash -n scripts/agent/*.sh .githooks/*
 python3 -m py_compile scripts/agent/*.py .codex/hooks/*.py
+python3 -m json.tool shared/app_contract.json >/dev/null
+python3 -m json.tool backend/app/data/levels.json >/dev/null
+.venv/bin/python tools/validate_levels.py
+.venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
 ```
 
-## Expected application commands after scaffold/backend setup
+## Backend setup and run commands (current — BATCH-0002 complete)
 
-These commands become valid only after the relevant implementation specs have created the files and any required dependency approvals have been granted.
+A3 dependency/network approval is required before running install commands.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[dev]"
-uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
-pytest
-python tools/validate_levels.py
+# Install (run from repo root, use repo .venv only):
+.venv/bin/python -m pip install -e ".[dev]"
+
+# Validate level data:
+.venv/bin/python tools/validate_levels.py
+
+# Run backend tests:
+.venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+
+# Start local server:
+.venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+## Expected frontend commands (deferred — BATCH-0003)
+
+These commands become valid only after BATCH-0003 frontend implementation.
+
+```bash
 node tests/js/run-tests.mjs
 ```
 

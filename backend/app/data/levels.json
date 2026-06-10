@@ -1,0 +1,84 @@
+{
+  "levels": [
+    {
+      "id": 1,
+      "slug": "level-1",
+      "title": "First Steps",
+      "width": 8,
+      "height": 6,
+      "difficulty": 1,
+      "grid": [
+        "########",
+        "#......#",
+        "#......#",
+        "#..B...#",
+        "#P...G.#",
+        "########"
+      ]
+    },
+    {
+      "id": 2,
+      "slug": "level-2",
+      "title": "Low Bridge",
+      "width": 8,
+      "height": 6,
+      "difficulty": 2,
+      "grid": [
+        "########",
+        "#......#",
+        "#......#",
+        "#.B....#",
+        "#P.#.G.#",
+        "########"
+      ]
+    },
+    {
+      "id": 3,
+      "slug": "level-3",
+      "title": "Stacked Path",
+      "width": 8,
+      "height": 6,
+      "difficulty": 3,
+      "grid": [
+        "########",
+        "#......#",
+        "#..B...#",
+        "#.B....#",
+        "#P...G.#",
+        "########"
+      ]
+    },
+    {
+      "id": 4,
+      "slug": "level-4",
+      "title": "Carry Over",
+      "width": 8,
+      "height": 6,
+      "difficulty": 4,
+      "grid": [
+        "########",
+        "#......#",
+        "#......#",
+        "#..B...#",
+        "#P.#.G.#",
+        "########"
+      ]
+    },
+    {
+      "id": 5,
+      "slug": "level-5",
+      "title": "Final Lift",
+      "width": 8,
+      "height": 6,
+      "difficulty": 5,
+      "grid": [
+        "########",
+        "#......#",
+        "#..B...#",
+        "#......#",
+        "#P.#G..#",
+        "########"
+      ]
+    }
+  ]
+}

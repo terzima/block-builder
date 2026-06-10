@@ -2,59 +2,60 @@
 
 ## Active Objective
 
-Prepare the repo for `BATCH-0002` backend levels API implementation. The plan and batch are approved; the remaining gate is A3 dependency/network approval.
+`BATCH-0002` backend levels API is complete. Next step is `BATCH-0003` frontend gameplay UI.
 
 ## Active Contract
 
-- Spec: `docs/specs/SPEC-0002-backend-levels-api.md` (Accepted, A3)
-- Plan: `docs/plans/PLAN-0002-backend-levels-api.md` (Ready for Implementation, M4, A3)
-- Batch: `docs/plans/batches/BATCH-0002-first-playable-slice.md` (Ready for Implementation, backend-only A3 batch)
+- Spec: `docs/specs/SPEC-0003-frontend-gameplay-ui.md` (Accepted)
+- Plan: `docs/plans/PLAN-0003-frontend-gameplay-ui.md`
+- Batch: `docs/plans/batches/BATCH-0003-first-playable-ui.md`
 - Branch: `codex/application-scaffold`
 
 ## Current Status
 
-- Application scaffold work is complete from prior local commit `4f2a7a6 chore(scaffold): add application skeleton`.
-- Planning/context remediation was committed in `6552ea1 docs(process): harden planning context`.
-- `SPEC-0002` and `SPEC-0003` are accepted.
-- `PLAN-0002` and `BATCH-0002` are approved and ready for implementation.
-- `PLAN-0003` and `BATCH-0003` are remediated but must wait until `BATCH-0002` backend checks pass.
-- `docs/operator/PROMPT_LIBRARY.md` has been updated to add prompts for creating new specs, plans, and batches from startup docs.
-- No backend API, gameplay, dependency install, network action, CI change, deployment change, or lockfile work has been started for the next batch.
+- `BATCH-0002` complete. All 24 backend tests pass. Level validator passes. No lockfile created.
+- Uncommitted working tree contains all BATCH-0002 implementation files plus prior doc remediation.
+- `BATCH-0003` frontend work has not started.
 
 ## Last Completed Work
 
-- Added prompt-library entries for creating new specs, plans, and batches from durable startup docs including project charter, roadmap, repo map, current state, ADRs, and nearby docs.
-- Reworked `docs/operator/PROMPT_LIBRARY.md` into a startup-to-implementation prompt flow with explicit spec approval, plan/batch approval, A3 dependency review, implementation, review, commit, roadmap sync, and handoff prompts.
-- Added this context handoff system: current-state dashboard, reusable status template, handoff template, worklog, `AGENTS.md` policy, and repo-map references.
-- Prior completed product setup: behavior-free application scaffold and shared contract foundation.
+`BATCH-0002` — backend levels API:
+- `pyproject.toml`: fastapi==0.115.6, pydantic==2.13.4 (resolved from `>=2.10.4,<3.0` for Python 3.14 wheel compatibility), uvicorn==0.34.0, pytest==8.3.4, httpx>=0.27.
+- `backend/app/schemas.py`: Pydantic response models and `LevelValidationError`.
+- `backend/app/settings.py`: frozen `Settings` dataclass and `get_settings()`.
+- `backend/app/middleware.py`: CORS, trusted-host, and request-logging middleware.
+- `backend/app/main.py`: lifespan data loading, all contracted routes, static file responses, error handlers.
+- `backend/app/services/level_service.py`: contract/level loading, full validation suite, metadata/lookup helpers.
+- `backend/app/data/levels.json`: exact first-five level fixture from PLAN-0002.
+- `tools/validate_levels.py`: CLI validator.
+- `tests/test_api.py`: 7 API route tests (module-scoped fixture).
+- `tests/test_level_validation.py`: 17 service-layer tests.
+- `README.md`, `docs/repo-map.md`: updated with backend commands.
 
-## Current Working Files
+## Known Deviations from PLAN-0002
 
-None expected after the docs prompt-library/status commit.
-
-## Known Issues
-
-- `docs/roadmap.md` still describes `BATCH-0002` as a combined first-playable slice; the current plan/batch remediation split backend into `BATCH-0002` and frontend into `BATCH-0003`.
-- `BATCH-0002` cannot be implemented until A3 dependency/network approval is granted.
-- `BATCH-0003` must wait until `BATCH-0002` backend checks pass.
+- `pydantic==2.10.4` has no pre-built wheel for Python 3.14 macOS arm64; resolved to `pydantic==2.13.4` with user A3 approval.
+- `httpx` added as dev dependency (required by `fastapi.testclient.TestClient`); approved by user.
+- `[tool.setuptools.packages.find]` added to prevent setuptools flat-layout error.
+- `test_api.py` uses module-scoped pytest fixture and `base_url="http://localhost"` to satisfy lifespan and TrustedHostMiddleware.
+- `docs/operator/PROMPT_LIBRARY.md` has pre-existing uncommitted changes; not modified.
+- Post-BATCH-0002 maintenance: `fastapi` upgraded `0.115.6→0.136.3` (A3 approved) to fix `asyncio.iscoroutinefunction` deprecation warnings from Python 3.14. Transitively pulled starlette `0.41.3→1.2.1` and `annotated-doc==0.0.4`. All 24 tests pass.
+- Residual warning: `StarletteDeprecationWarning: Using httpx with starlette.testclient is deprecated; install httpx2 instead.` — test-only, does not affect runtime. Requires a separate A3 approval to swap `httpx→httpx2`.
 
 ## Next Action
 
-Request A3 dependency/network approval for `BATCH-0002`, then execute the accepted backend batch if approval is granted.
+Commit BATCH-0002 changes with `feat(backend): add levels API`. Then plan or start BATCH-0003.
 
-## Stop Conditions
+## Stop Conditions (BATCH-0003)
 
-- A3 dependency/network approval is denied or package/version choices need to change.
-- Work requires dependencies, network access, lockfiles, CI, deployment, secrets, or files outside the active plan without explicit approval.
-- Backend API paths must diverge from `shared/app_contract.json`.
-- Level data requires gameplay-rule changes.
-- Frontend gameplay or UI work is requested before `BATCH-0002` backend prerequisites are complete.
+- Frontend work requires gameplay-rule changes to level data or backend API.
+- A dependency or network action is needed without explicit approval.
+- Scope expands beyond `PLAN-0003` accepted files.
 
 ## Human Context Needed
 
-- A3 approval is needed before editing dependency manifests, installing Python packages, creating lockfiles, or running network-backed commands for `BATCH-0002`.
-- A2 UX/product review will be needed later at the `BATCH-0003` first-playable checkpoint.
-- Human decision may be needed on whether to update `docs/roadmap.md` to reflect the backend/frontend batch split.
+- A2 UX/product review required at the BATCH-0003 first-playable checkpoint.
+- Human decision needed on whether to update `docs/roadmap.md` to reflect the backend/frontend batch split.
 
 ## Last Updated
 

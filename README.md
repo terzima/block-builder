@@ -4,9 +4,9 @@ Block Builder is a local-first deterministic grid block puzzle game. The project
 
 ## Current Status
 
-- Governance and planning docs exist.
-- `BATCH-0001` creates the behavior-free application scaffold.
-- Backend APIs, level data, validation, frontend gameplay, and playable UI are deferred to later accepted specs.
+- `BATCH-0001` complete: behavior-free application scaffold.
+- `BATCH-0002` complete: backend levels API, level validation, and first-five level data.
+- Frontend gameplay and playable UI are deferred to `BATCH-0003`.
 
 ## Scaffold Created By BATCH-0001
 
@@ -42,28 +42,55 @@ tools/
 ## Local Setup
 
 1. Review `AGENTS.md` before starting agent work.
-2. Use `.env.example` as the source for future local environment defaults.
+2. Use `.env.example` as the source for local environment overrides.
 3. Do not commit `.env`, `.local/`, generated data, dependency directories, or logs.
-4. Do not install dependencies until a later accepted spec requests them and the required approval is granted.
+4. A3 dependency/network approval is required before running install commands.
+
+## Backend Setup (BATCH-0002)
+
+Use only the repo `.venv`. Do not use system Python, global pip, or sudo.
+
+```bash
+# Install dependencies:
+.venv/bin/python -m pip install -e ".[dev]"
+
+# Validate level data:
+.venv/bin/python tools/validate_levels.py
+
+# Run backend tests:
+.venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+
+# Start local server:
+.venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Routes available after server start:
+
+- `GET /` — frontend HTML
+- `GET /api/v1/health` — health check
+- `GET /api/v1/config` — public app contract
+- `GET /api/v1/levels` — level metadata list (no grids)
+- `GET /api/v1/levels/{id}` — level detail with grid
+- `GET /shared/app_contract.json` — raw contract file
+
+Progress API is not implemented; `ENABLE_PROGRESS_API` is reserved for a future spec.
 
 ## Verification
-
-Current scaffold checks:
 
 ```bash
 git status --short
 python3 -m json.tool shared/app_contract.json >/dev/null
-bash scripts/agent/agent_preflight.sh
+python3 -m json.tool backend/app/data/levels.json >/dev/null
+.venv/bin/python tools/validate_levels.py
+.venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
 git diff --check
 ```
-
-Expected application commands such as `pytest`, `uvicorn`, and JavaScript tests become valid only after later specs add dependency manifests and implementation files.
 
 ## Planning Sources
 
 - `docs/project-charter.md`
 - `docs/repo-map.md`
-- `docs/specs/SPEC-0001-application-scaffold.md`
-- `docs/plans/PLAN-0001-application-scaffold.md`
-- `docs/plans/batches/BATCH-0001-application-scaffold.md`
+- `docs/specs/SPEC-0002-backend-levels-api.md`
+- `docs/plans/PLAN-0002-backend-levels-api.md`
+- `docs/plans/batches/BATCH-0002-first-playable-slice.md`
 - `docs/adr/ADR-0000-architecture-direction.md`
