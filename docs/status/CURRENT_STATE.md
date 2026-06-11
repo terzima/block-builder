@@ -2,11 +2,14 @@
 
 ## Active Objective
 
-CR-0003 implementation is complete locally (accepted 2026-06-10). Sub-change A and Sub-change B are implemented. Automated checks pass, and an engine-level completion trace exists for redesigned levels 2-5. A2 human UX/product checkpoint remains open until the project owner manually plays all five levels.
+First playable work is committed locally at `96545e9`. CR-0003 is complete locally (accepted 2026-06-10), with Sub-change A and Sub-change B implemented. Automated checks pass, and an engine-level completion trace exists for redesigned levels 2-5. A2 human UX/product checkpoint remains open until the project owner manually plays all five levels. `SPEC-0004` is accepted and `PLAN-0004` is ready for level expansion around `docs/intake/candidate_levels_6_20.json`, but implementation must wait until the A2 checkpoint is complete.
 
 ## Active Contract
 
 - Spec: `docs/specs/SPEC-0003-frontend-gameplay-ui.md` (Accepted — CR-0003 wording update applied)
+- Spec: `docs/specs/SPEC-0004-level-expansion-pipeline.md` (Accepted)
+- Plan: `docs/plans/PLAN-0004-level-expansion-pipeline.md` (Ready for Implementation)
+- Active Source Candidate: `docs/intake/candidate_levels_6_20.json` (planning/intake source only; not runtime data)
 - Plan: `docs/plans/PLAN-0003-frontend-gameplay-ui.md` (Ready — CR-0003 wording update applied)
 - Batch: `docs/plans/batches/BATCH-0003-first-playable-ui.md`
 - Change Requests: `docs/change-requests/CR-0002-a2-ux-mechanics-revision.md` (Accepted, fully implemented)
@@ -22,7 +25,10 @@ CR-0003 implementation is complete locally (accepted 2026-06-10). Sub-change A a
 - `CR-0003 Sub-change A` implemented: two-press direction mechanic in `engine.js` + engine tests updated. All JS tests pass.
 - `CR-0003 Sub-change B` implemented: levels 2-5 were redesigned in `backend/app/data/levels.json`.
 - Engine-level solution traces complete levels 2-5 with the accepted mechanics.
-- No local commit has been made yet. The working tree remains dirty with uncommitted BATCH-0003, CR-0002, and CR-0003 changes.
+- First playable commit exists locally: `96545e9 feat(gameplay): add first playable UI and level redesign`.
+- `SPEC-0004-level-expansion-pipeline` has been accepted for level expansion against `docs/intake/candidate_levels_6_20.json`.
+- M4 `PLAN-0004-level-expansion-pipeline` is ready for implementation after the first-playable A2 checkpoint.
+- `docs/intake/candidate_levels_6_20.json` contains candidate levels 6-20 for level-expansion planning. It is not accepted production data and must not be served or imported at runtime.
 
 ## Blocking: A2 Human UX/Product Checkpoint
 
@@ -90,38 +96,10 @@ node --input-type=module -e "<engine trace>" → levels 2-5 complete ✓
 ## Files Changed (uncommitted)
 
 Modified:
-- `README.md`
-- `backend/app/data/levels.json` — levels 2-5 redesigned (CR-0003-B)
-- `backend/app/main.py` — catch-all static route for JS/CSS files
-- `docs/plans/PLAN-0003-frontend-gameplay-ui.md`
-- `docs/plans/batches/BATCH-0003-first-playable-ui.md`
-- `docs/repo-map.md`
-- `docs/specs/SPEC-0003-frontend-gameplay-ui.md`
-- `docs/status/CURRENT_STATE.md`
-- `frontend/index.html` — tabindex on board, jump button label
-- `frontend/style.css` — focus ring suppression, facing triangle, carry pip
-- `shared/COMMUNICATION_CONTRACT.md`
-- `shared/app_contract.json` — interact added, Space→interact
+- None expected after committing the SPEC-0004/PLAN-0004 planning docs.
 
 New (untracked):
-- `docs/change-requests/CR-0002-a2-ux-mechanics-revision.md`
-- `docs/change-requests/CR-0003-direction-mechanic-and-level-redesign.md`
-- `frontend/js/api.js`
-- `frontend/js/app.js`
-- `frontend/js/contract.js`
-- `frontend/js/engine.js` ← two-press direction mechanic applied (CR-0003-A)
-- `frontend/js/input.js`
-- `frontend/js/physics.js`
-- `frontend/js/renderer.js`
-- `frontend/js/storage.js`
-- `frontend/js/ui.js`
-- `package.json`
-- `tests/js/engine.test.js` ← turn tests updated (CR-0003-A)
-- `tests/js/physics.test.js`
-- `tests/js/run-tests.mjs`
-
-Remaining planned edits:
-- None.
+- `.superpowers/brainstorm/` — local visual brainstorming artifacts; not routine implementation input and should not be committed unless explicitly requested.
 
 ## Known Deviations from PLAN-0002 (carried forward)
 
@@ -160,7 +138,7 @@ The project owner must accept or reject first-playable UX/product feel before an
 
 **Project owner: perform the A2 human UX/product checkpoint** by manually playing all five levels in the browser.
 
-If accepted, the next agent can prepare an appropriate local commit for the uncommitted BATCH-0003 + CR-0002 + CR-0003 work, then wait for explicit approval before any push or PR.
+After A2 is accepted, implementation can proceed from `docs/plans/PLAN-0004-level-expansion-pipeline.md`.
 
 ## Last Updated
 
