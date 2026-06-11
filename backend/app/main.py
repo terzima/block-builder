@@ -118,3 +118,20 @@ async def shared_contract() -> FileResponse:
 async def frontend_root() -> FileResponse:
     index = settings.repo_root / "frontend" / "index.html"
     return FileResponse(path=str(index), media_type="text/html")
+
+
+@app.get("/{path:path}")
+async def frontend_static(path: str) -> FileResponse:
+    """Serve any file from the frontend/ directory.
+
+    Falls back to index.html for unknown paths so SPA routing works.
+    The /api/v1/* and /shared/* routes defined above take precedence.
+    """
+    target = settings.repo_root / "frontend" / path
+    if target.exists() and target.is_file():
+        return FileResponse(path=str(target))
+    # Unknown path — serve index.html so the JS app can handle it
+    return FileResponse(
+        path=str(settings.repo_root / "frontend" / "index.html"),
+        media_type="text/html",
+    )

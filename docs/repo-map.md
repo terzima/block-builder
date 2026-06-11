@@ -1,6 +1,6 @@
 # Repo Map
 
-Status: Backend implemented (BATCH-0002 complete)
+Status: First playable implemented (BATCH-0003 complete — pending A2 human UX checkpoint)
 Maturity: M3
 Last updated: 2026-06-10
 
@@ -127,12 +127,15 @@ A3 dependency/network approval is required before running install commands.
 .venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## Expected frontend commands (deferred — BATCH-0003)
-
-These commands become valid only after BATCH-0003 frontend implementation.
+## Frontend commands (current — BATCH-0003 complete)
 
 ```bash
+# Run JS engine/physics tests:
 node tests/js/run-tests.mjs
+
+# Start backend server (required for browser play):
+.venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+# then visit: http://127.0.0.1:8000/
 ```
 
 Do not run network-backed installs until dependency and network approval are explicitly granted.

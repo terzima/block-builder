@@ -28,6 +28,7 @@
     "moveLeft": "moveLeft",
     "moveRight": "moveRight",
     "jump": "jump",
+    "interact": "interact",
     "reset": "reset",
     "undo": "undo",
     "selectLevel": "selectLevel"
@@ -35,7 +36,8 @@
   "keyboard": {
     "moveLeft": ["ArrowLeft", "KeyA"],
     "moveRight": ["ArrowRight", "KeyD"],
-    "jump": ["ArrowUp", "KeyW", "Space"],
+    "jump": ["ArrowUp", "KeyW"],
+    "interact": ["KeyE", "Enter", "Space"],
     "reset": ["KeyR"],
     "undo": ["KeyZ"]
   },

@@ -107,7 +107,7 @@ Runtime invariants:
 
 - `moveLeft`: attempt one-column left movement and set facing left.
 - `moveRight`: attempt one-column right movement and set facing right.
-- `jump`: attempt one-row upward movement.
+- `jump`: attempt one row upward and one column in the current facing direction.
 - `interact`: pickup or place one block based on carrying state.
 - `reset`: restore initial state for the selected level.
 - `undo`: restore the previous history entry.
@@ -136,9 +136,9 @@ The `state` object is the next runtime state. Invalid actions return the origina
 - The player occupies one cell.
 - Each block occupies one cell.
 - The player cannot move into walls, uncarried blocks, or outside the grid.
-- Moving left/right changes facing even when the move is blocked.
+- Pressing the opposite direction when not already facing that way turns the player in place (no movement, no `moves` increment, no history push). A subsequent press in the same now-facing direction attempts movement as normal.
 - A successful left/right move changes the player column by one and increments `moves` by one.
-- Jump moves the player one row upward in the same column only if the target cell is empty and in bounds.
+- Jump moves the player one row upward and one column in the current `facing` direction. The target cell must be empty terrain, in bounds, and unoccupied.
 - Jump does not require grounded state for this first playable slice.
 - Gravity resolves after successful move, jump, interact/place, reset, undo, and level load.
 - Gravity repeatedly moves every uncarried block down one row if the cell below is empty terrain and unoccupied; repeat until no uncarried block can fall.

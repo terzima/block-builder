@@ -1,6 +1,6 @@
 # PLAN-0003: Frontend Gameplay UI
 
-Status: Draft
+Status: Ready for Implementation
 Approval Class: A2
 Maturity: M4
 Owner: Unassigned
@@ -306,8 +306,8 @@ Assertions:
 
 - `parseLevel` converts `P`, `B`, and `G` into runtime entities and leaves terrain cells empty except walls.
 - `createInitialState` applies gravity and sets `levelId`, `moves`, `facing`, `blocks`, `goal`, and empty history.
-- `moveLeft` and `moveRight` move one column when target is empty and increment moves.
-- Blocked movement changes facing for left/right but returns `invalid: true`, `changed: false`, and does not increment moves.
+- Pressing the opposite direction when not already facing that way turns the player in place (no movement, no `moves` increment, no history push). A subsequent press in the same now-facing direction attempts movement as normal.
+- Blocked movement while already facing that direction returns `invalid: true`, `changed: false`, and does not increment moves.
 - `jump` moves one row upward only when the target is empty and in bounds.
 - `interact` picks up the adjacent facing block when not carrying.
 - `interact` places a carried block into an adjacent empty cell and then applies gravity.

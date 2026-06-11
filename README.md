@@ -6,7 +6,7 @@ Block Builder is a local-first deterministic grid block puzzle game. The project
 
 - `BATCH-0001` complete: behavior-free application scaffold.
 - `BATCH-0002` complete: backend levels API, level validation, and first-five level data.
-- Frontend gameplay and playable UI are deferred to `BATCH-0003`.
+- `BATCH-0003` complete: vanilla JS engine/physics/UI first playable — pending A2 human UX checkpoint.
 
 ## Scaffold Created By BATCH-0001
 
@@ -75,6 +75,32 @@ Routes available after server start:
 
 Progress API is not implemented; `ENABLE_PROGRESS_API` is reserved for a future spec.
 
+## Frontend Gameplay (BATCH-0003)
+
+Requires the backend server to be running (see Backend Setup above).
+
+```bash
+# Run JS engine/physics tests (Node.js, no dependencies):
+node tests/js/run-tests.mjs
+
+# Start the backend and open in a browser:
+.venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+# then visit: http://127.0.0.1:8000/
+```
+
+### Keyboard controls
+
+| Key | Action |
+|-----|--------|
+| A / ← | Move left |
+| D / → | Move right |
+| W / ↑ | Jump (up + one column in current facing direction) |
+| E / Enter / Space | Interact (pick up or place block) |
+| Z | Undo |
+| R | Reset level |
+
+On-screen buttons mirror all controls for touch/mouse play.
+
 ## Verification
 
 ```bash
@@ -83,6 +109,7 @@ python3 -m json.tool shared/app_contract.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
 .venv/bin/python tools/validate_levels.py
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+node tests/js/run-tests.mjs
 git diff --check
 ```
 
