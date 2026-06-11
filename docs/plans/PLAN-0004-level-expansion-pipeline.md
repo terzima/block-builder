@@ -8,20 +8,23 @@ Created: 2026-06-11
 Updated: 2026-06-11
 Related spec: `docs/specs/SPEC-0004-level-expansion-pipeline.md`
 Related ADRs: `docs/adr/ADR-0000-architecture-direction.md`
-Related Change Requests: None
+Related Change Requests: `docs/change-requests/CR-0004-level-1-support-geometry-fix.md`, `docs/change-requests/CR-0005-solution-evidence-capture.md`, `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md`, `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md`, `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md`, `docs/change-requests/CR-0009-physics-certified-macro-solver.md`, `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md`
 
-**Goal:** Expand the local canonical game from 5 levels to 20 levels using the accepted SPEC-0004 candidate source, with validator-backed data, engine-replayed solution evidence, and variable-board rendering support.
+**Goal:** Expand the local canonical game from 5 levels to 20 levels using the accepted SPEC-0004 candidate source, with validator-backed data, stack-stable pickup physics, deterministic block-resource reporting, an engine-backed canonical state-space solver guided by a construction ledger, layered design-facing solver reporting, engine-replayed solution evidence, and variable-board rendering support.
 
 **Architecture:** Keep backend responsibilities limited to JSON loading, validation, static serving, and API responses. Keep gameplay state and solution replay in the existing vanilla JavaScript engine. Treat `docs/intake/candidate_levels_6_20.json` as planning/import source only; canonical runtime data remains `backend/app/data/levels.json`.
 
-**Tech stack:** Existing Python/FastAPI/Pydantic/pytest backend, existing vanilla JavaScript ES modules, existing no-dependency Node assertion harness. No new dependencies, lockfiles, network access, CI changes, deployment work, generator, or production solver.
+**Tech stack:** Existing Python/FastAPI/Pydantic/pytest backend, existing vanilla JavaScript ES modules, existing no-dependency Node assertion harness. No new dependencies, lockfiles, network access, CI changes, deployment work, generator, production/runtime solver, solver package, PDDL planner, external solver package, or dependency-backed pathfinding engine.
 
 ## Preconditions
 
-- [ ] `SPEC-0004` is accepted.
-- [ ] First-playable A2 UX/product checkpoint for levels 1-5 is explicitly accepted before Implementation mode begins.
+- [ ] `SPEC-0004` is accepted, including CR-0010's engine-backed canonical state-space solver, construction ledger, layered solver reporting contract, and benchmark requirements for levels 10, 13, and 14.
+- [ ] First-playable A2 UX/product checkpoint for levels 1-5 was accepted by the project owner on 2026-06-11 before PLAN-0004 implementation began.
+- [ ] The project owner has confirmed current levels 1-20 are manually solvable; current level 13 is a known-solvable solver benchmark, not an open geometry-validity question.
 - [ ] Existing first-five level data remains unchanged unless an accepted Change Request from the first-playable A2 review says otherwise.
 - [ ] `docs/intake/candidate_levels_6_20.json` exists and remains planning/intake source only.
+- [ ] `CR-0004`, `CR-0005`, `CR-0006`, `CR-0007`, `CR-0008`, `CR-0009`, and `CR-0010` are accepted.
+- [ ] This plan is `Status: Ready for Implementation` before implementation resumes from Task 4C.
 - [ ] Stop before any dependency addition, dependency installation, lockfile creation, network-backed command, CI/deployment change, generator, solver dependency, or frontend framework/build-tool adoption.
 - [ ] Stop if implementation needs to read `docs/intake/PROJECT_OVERVIEW_RAW.md` or `.superpowers/brainstorm/` artifacts to decide level behavior.
 
@@ -31,20 +34,27 @@ Related Change Requests: None
 |---|---|---|
 | Read | `docs/specs/SPEC-0004-level-expansion-pipeline.md` | Accepted behavior, data, validation, and gate contract. |
 | Read | `docs/intake/candidate_levels_6_20.json` | Exact accepted candidate data source for levels 6-20; never runtime input. |
-| Modify | `backend/app/data/levels.json` | Canonical runtime level data, levels 1-20. |
-| Modify | `backend/app/services/level_service.py` | Canonical/candidate validation, SPEC-0004 error codes, exact ID expectations. |
-| Modify | `tools/validate_levels.py` | CLI validation for canonical levels plus optional candidate source validation. |
-| Modify | `tests/test_level_validation.py` | Backend validation assertions for 20 canonical levels, candidate source, and SPEC-0004 failure codes. |
+| Modify | `docs/intake/candidate_levels_6_20.json` | Update level 13 to the accepted CR-0008 15-block lower-yard revision. |
+| Modify | `backend/app/data/levels.json` | Canonical runtime level data, levels 1-20, with CR-0004, CR-0006, and CR-0008 revisions. |
+| Modify | `backend/app/services/level_service.py` | Canonical/candidate/resource validation, SPEC-0004 error codes, exact ID expectations, resource analysis. |
+| Modify | `tools/validate_levels.py` | CLI validation for canonical levels, optional candidate source validation, and optional resource source validation/reporting. |
+| Modify | `tests/test_level_validation.py` | Backend validation assertions for 20 canonical levels, candidate source, resource analysis, and SPEC-0004 failure codes. |
 | Modify | `tests/test_api.py` | API list/detail assertions for levels 1-20 and variable-size level metadata/detail. |
-| Create | `tests/fixtures/level_solutions.json` | Machine-readable solution manifest for levels 1-20. |
-| Create | `tests/js/level-solutions.test.js` | Replays solution manifest through the existing JS engine. |
+| Modify | `frontend/js/engine.js` | Enforce stack-stability pickup rule. |
+| Modify | `tests/js/engine.test.js` | JS engine assertions for supporting-block pickup behavior. |
+| Create or modify | `tests/fixtures/level_resource_requirements.json` | Machine-readable resource requirement segments for levels 6-20. |
+| Create or modify | `tests/fixtures/level_solutions.json` | Machine-readable solution manifest for levels 1-20. |
+| Create or modify | `tests/js/level-solutions.test.js` | Replays solution manifest through the existing JS engine. |
+| Create or modify | `tools/solve-levels.mjs` | No-dependency deterministic solver/analyzer CLI using the existing JS engine as transition authority, canonical whole-board state keys, construction-ledger planning, tactical replay, and layered reporting. |
+| Create or modify | `tests/js/solver.test.js` | Solver preflight, canonical state-key, construction-ledger, macro planner, tactical replay, layered reporting, validity, analyzer, determinism, and performance assertions. |
+| Create or modify | `tests/fixtures/level_solver_expectations.json` | Expected solver statuses, budgets, layered diagnostics, failure categories, construction-ledger fixtures, canonical-state fixtures, macro fixtures, benchmark definitions, and synthetic fixture definitions. |
 | Modify | `tests/js/run-tests.mjs` | Runs physics, engine, and solution evidence tests in order. |
 | Modify | `frontend/js/renderer.js` | Exposes variable board dimensions to CSS/ARIA while preserving render contract. |
 | Modify | `frontend/style.css` | Makes larger boards legible and controls usable on desktop and mobile widths. |
 | Modify | `docs/repo-map.md` | Update current verification commands and level-expansion status after implementation. |
 | Modify | `docs/status/CURRENT_STATE.md` | Update active implementation status, checks, gates, and next action after implementation. |
 
-No changes are planned for API route names, shared contract keys, engine mechanics, physics mechanics, dependency manifests, lockfiles, hooks, CI, deployment, generated files, or secrets.
+No changes are planned for API route names, shared contract keys, tile symbols, action names, physics gravity, dependency manifests, lockfiles, hooks, CI, deployment, generated files, secrets, or runtime/browser solver behavior.
 
 ## Contracts to implement
 
@@ -60,8 +70,8 @@ No changes are planned for API route names, shared contract keys, engine mechani
 
 Implementation must:
 
-- Preserve existing level objects for IDs 1-5 byte-for-byte unless first-playable A2 feedback has an accepted Change Request.
-- Append levels 6-20 from `docs/intake/candidate_levels_6_20.json`.
+- Preserve existing level objects for IDs 1-5 except the accepted CR-0004 level 1 source-geometry fix.
+- Append levels 6-20 from `docs/intake/candidate_levels_6_20.json`, with the accepted CR-0008 level 13 revision applied to both the intake source and canonical runtime data.
 - Produce exactly IDs `1` through `20` in ascending order.
 - Keep `slug` exactly `level-{id}`.
 - Keep `difficulty` exactly equal to `id`.
@@ -70,6 +80,17 @@ Implementation must:
 - Keep legal symbols exactly `.`, `#`, `P`, `B`, `G`.
 - Keep every raw `P` and `B` directly supported by `#` or `B` in the row below.
 - Keep solution metadata out of API-served level objects.
+- Keep resource metadata out of API-served level objects.
+- Allow surplus blocks. Solution evidence does not need to use every available block.
+- Treat resource deficits as validation failures before solution replay.
+
+Level 13 CR-0008 row update:
+
+```json
+"#PBBBBBB.B.B.B.B.B.B.B..#"
+```
+
+This replaces only level 13 row 12 in both `docs/intake/candidate_levels_6_20.json` and `backend/app/data/levels.json`. It adds exactly three supported, reachable lower-yard blocks while preserving the Double Bench structure, raising level 13 from 12 to 15 movable blocks. All other level 13 rows stay unchanged unless a later accepted Change Request says otherwise.
 
 Candidate source contract for levels 6-20:
 
@@ -82,7 +103,7 @@ Candidate source contract for levels 6-20:
 | 10 | `level-10` | Shelf Stockpile | 22x12 | 10 | 7 |
 | 11 | `level-11` | Across and Up | 24x12 | 11 | 8 |
 | 12 | `level-12` | Build on the Workbench | 24x13 | 12 | 8 |
-| 13 | `level-13` | Double Bench | 25x14 | 13 | 10 |
+| 13 | `level-13` | Double Bench | 25x14 | 13 | 15 |
 | 14 | `level-14` | Ten Block Pyramid | 26x14 | 14 | 10 |
 | 15 | `level-15` | Crater Logistics | 28x14 | 15 | 11 |
 | 16 | `level-16` | Raised Worksite | 30x15 | 16 | 10 |
@@ -117,6 +138,26 @@ Implementation detail:
 - Use one internal helper such as `_validate_level_sequence(levels, contract, expected_ids)` so canonical and candidate validation cannot drift.
 - Stop on the first validation failure.
 
+Add one public resource-analysis helper for tooling and tests:
+
+```python
+def analyze_level_resources(
+    levels: Sequence[LevelDefinition],
+    resource_manifest: Mapping[str, Any],
+) -> list[LevelResourceAnalysis]:
+    """Compare available blocks against deterministic scaffold requirements."""
+```
+
+Implementation detail:
+
+- Keep `LevelResourceAnalysis` as a typed dictionary or small dataclass local to `level_service.py`; it does not become part of API responses.
+- Validate the resource manifest shape, version, ID coverage, segment names, and row values before returning analysis.
+- Require exactly one resource entry for each level ID `6..20`.
+- Compute `requiredBlocksForSegment = rise * (rise + 1) // 2`, where `rise = max(0, fromRow - toRow)`.
+- Compute `requiredBlocks`, `availableBlocks`, and `surplusBlocks` for each level.
+- Raise `LEVEL_RESOURCE_DEFICIT` when `surplusBlocks < 0`.
+- Do not use this helper as a production solver. It is a deterministic design diagnostic; JS replay remains the solvability proof.
+
 ### Validation error code mapping
 
 Update validation to use SPEC-0004 codes where applicable:
@@ -132,6 +173,8 @@ Update validation to use SPEC-0004 codes where applicable:
 | `LEVEL_GRID_SYMBOL_INVALID` | Any grid character is outside `.`, `#`, `P`, `B`, `G`. |
 | `LEVEL_ENTITY_COUNT_INVALID` | Entity count is not exactly one `P`, exactly one `G`, and at least one `B`. |
 | `LEVEL_INITIAL_STATE_UNSTABLE` | Any raw `P` or `B` has neither `#` nor `B` below it. |
+| `LEVEL_RESOURCE_MANIFEST_INVALID` | Resource manifest shape, version, ID coverage, row values, or segment names are invalid. |
+| `LEVEL_RESOURCE_DEFICIT` | A level has fewer available blocks than the deterministic resource requirement. |
 | `LEVEL_SOLUTION_MANIFEST_INVALID` | Solution manifest shape, version, ID coverage, or action names are invalid. |
 | `LEVEL_SOLUTION_INVALID` | Solution replay returns invalid or does not complete the level. |
 
@@ -142,7 +185,7 @@ Keep existing file/root/not-found codes:
 - `LEVELS_ROOT_INVALID`
 - `LEVEL_NOT_FOUND`
 
-Messages should be concise and include enough details to diagnose. Details dictionaries should include `levelId` when available, plus `row`, `col`, `expected`, `got`, `step`, or `action` when relevant.
+Messages should be concise and include enough details to diagnose. Details dictionaries should include `levelId` when available, plus `row`, `col`, `expected`, `got`, `step`, `action`, `availableBlocks`, `requiredBlocks`, or `surplusBlocks` when relevant.
 
 ### CLI contract
 
@@ -152,6 +195,8 @@ Messages should be concise and include enough details to diagnose. Details dicti
 .venv/bin/python tools/validate_levels.py
 .venv/bin/python tools/validate_levels.py backend/app/data/levels.json
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json
 ```
 
 Expected successful output:
@@ -159,13 +204,63 @@ Expected successful output:
 ```text
 Validated 20 levels from backend/app/data/levels.json
 Validated 15 candidate levels from docs/intake/candidate_levels_6_20.json
+Validated resources for 15 levels from tests/fixtures/level_resource_requirements.json
 ```
 
 For failures, print the validation code, a colon, a space, and the validation message to stderr, then exit `1`.
 
+### Resource manifest
+
+Create or update `tests/fixtures/level_resource_requirements.json`:
+
+```json
+{
+  "version": "0.1.0",
+  "levels": [
+    {
+      "levelId": 13,
+      "segments": [
+        { "name": "ground-to-workbench", "fromRow": 12, "toRow": 9 },
+        { "name": "workbench-to-goal", "fromRow": 9, "toRow": 6 }
+      ]
+    }
+  ]
+}
+```
+
+Rules:
+
+- Exactly one resource entry exists for each ID `6..20`.
+- `segments` is non-empty.
+- Segment `name` is a non-empty string and is unique within the level.
+- `fromRow` and `toRow` are zero-based integers within the canonical level height.
+- For each segment, `rise = max(0, fromRow - toRow)`.
+- For each segment, `requiredBlocksForSegment = rise * (rise + 1) / 2`.
+- For each level, `requiredBlocks = sum(requiredBlocksForSegment)`.
+- For each level, `availableBlocks = count("B")` in the canonical grid.
+- For each level, `surplusBlocks = availableBlocks - requiredBlocks`.
+- `surplusBlocks < 0` fails with `LEVEL_RESOURCE_DEFICIT`.
+- `surplusBlocks >= 0` passes the resource gate but does not prove solvability.
+- Level 13 must include the two segments shown above, report `availableBlocks = 15`, `requiredBlocks = 12`, and `surplusBlocks = 3` after the CR-0008 row update.
+
+### Stack-stability engine contract
+
+Update `frontend/js/engine.js` so block pickup follows the CR-0006 rule:
+
+- When the player is not carrying a block and uses `interact`, first find the adjacent block in the facing direction as today.
+- If no adjacent block exists, keep the existing invalid/no-op behavior.
+- If an adjacent block exists and any uncarried block has the same column and `row === adjacent.row - 1`, return an invalid result with:
+  - `invalid: true`
+  - `changed: false`
+  - unchanged `moves`
+  - unchanged `history`
+  - message exactly `Block is supporting another block.`
+- If the adjacent block has no block directly above it, existing pickup behavior still applies.
+- Placement behavior and gravity behavior remain unchanged.
+
 ### Solution manifest
 
-Create `tests/fixtures/level_solutions.json`:
+Create or update `tests/fixtures/level_solutions.json`:
 
 ```json
 {
@@ -202,9 +297,218 @@ Known accepted traces:
 
 Level 1 must have a replayed solution in the fixture; do not assume the shortest path without running the solution test.
 
+### Deterministic solver/analyzer CLI
+
+Create or update `tools/solve-levels.mjs` as a no-dependency Node ES module. It must export these functions for tests:
+
+```js
+export function runPreflight(level, contract, options = {}) {}
+export function planLevel(level, contract, options = {}) {}
+export function solveLevel(level, contract, options = {}) {}
+export function analyzeLevel(level, contract, solutionReport, options = {}) {}
+export function runSolver(options = {}) {}
+export function canonicalizeState(state, levelId) {}
+export function createStateKey(state) {}
+export function expandLegalActions(state, level, contract) {}
+export function createFailureSignature(report) {}
+export function isFailureDominated(candidateSignature, priorSignature) {}
+export function createConstructionLedger(context, candidatePlan = {}) {}
+export function scoreConstructionLedger(ledger, context = {}) {}
+export function isLedgerDominated(candidateLedger, priorLedger) {}
+export function scheduleLedgerMacros(context, ledger) {}
+export function identifySupportedScaffoldTargets(context) {}
+export function classifyBlocks(context) {}
+export function collectLegalFreeBlock(context, blockSelector) {}
+export function placeSupportedBlock(context, targetCell) {}
+export function buildStairOrScaffold(context, scaffoldTargets) {}
+export function climbToWorkPlatform(context, platformTarget) {}
+export function recoverTemporaryBlock(context, blockSelector) {}
+export function completeFinalGoalApproach(context, approachCell) {}
+export function executeMacroStep(context, macroStep) {}
+export function createDefaultReport(report) {}
+export function createDebugTrace(report) {}
+```
+
+Implementation rules:
+
+- Read `shared/app_contract.json` and `backend/app/data/levels.json` through Node built-ins.
+- Use `createInitialState(level, contract)` and `dispatchGameAction(state, { type: action }, level, contract)` from `frontend/js/engine.js`.
+- Search only `moveLeft`, `moveRight`, `jump`, and `interact`.
+- Never use or emit `reset`, `undo`, or `selectLevel`.
+- Never write level, intake, solution, or expectation fixtures.
+- Keep output deterministic for identical inputs and budgets.
+- Use a three-layer solver: an engine-backed canonical state-space layer, a construction ledger that chooses scaffold and resource subgoals, and a tactical executor that decomposes each ledger/macro step into raw engine actions.
+- A macro may propose a target state, but only a replayed raw action list through `dispatchGameAction(...)` can commit the macro result.
+- Reject any macro that creates a floating block, teleports a block, picks up a supporting block, places into an invalid cell, mismatches its promised state after gravity, or cannot replay through legal engine actions.
+- Treat every emitted `SOLVED` action list as candidate evidence only until `tests/js/level-solutions.test.js` replays it from the solution fixture.
+- Treat blocks as interchangeable in solver state keys. Engine-internal block IDs may be present in runtime objects, but they must not affect canonical solver equality or repeated-state pruning.
+
+CLI arguments:
+
+| Flag | Values | Meaning |
+|---|---|---|
+| `--mode` | `validity`, `analyze` | `validity` searches for completion; `analyze` reports metrics/recommendations. |
+| `--level` | integer ID | Run one level. Mutually exclusive with `--all`. |
+| `--all` | boolean | Run all canonical levels. Mutually exclusive with `--level`. |
+| `--max-states` | positive integer | Global state expansion budget per level. |
+| `--format` | `json`, `text` | Optional; default `json`. Tests use `json`. |
+| `--debug-trace` | boolean | Include detailed macro, tactical replay, pruning, scoring, and raw state diagnostics. |
+
+Default JSON output shape:
+
+```json
+{
+  "version": "0.1.0",
+  "mode": "validity",
+  "levelId": 13,
+  "status": "SOLVED",
+  "phase": "complete_final_goal_approach",
+  "failedInvariant": null,
+  "failureCategory": null,
+  "cause": null,
+  "topRecommendations": [],
+  "summary": {
+    "blocksAvailable": 15,
+    "blocksStaged": 0,
+    "finalScaffoldCellsBuilt": 15,
+    "temporaryBlocksUsed": 6,
+    "recoverableBlocksRemaining": 3,
+    "statesExpanded": 124,
+    "maxQueueSize": 41,
+    "macrosAccepted": 42,
+    "macrosRejected": 0,
+    "solutionLength": 230
+  },
+  "actions": [],
+  "debugTraceAvailable": true
+}
+```
+
+Allowed statuses:
+
+- `SOLVED`
+- `FAILED_PREFLIGHT`
+- `UNPROVEN_WITHIN_LIMIT`
+- `UNSOLVABLE_EXHAUSTED`
+- `ANALYZED`
+
+Default output rules:
+
+- Always include `status`, `levelId`, `phase`, `failedInvariant`, `failureCategory`, `cause`, `topRecommendations`, and `summary`.
+- Include `actions` when status is `SOLVED`; the actions must be the flattened raw action replay from the accepted macro plan.
+- `topRecommendations` contains at most three entries, each with `type`, `priority`, `reason`, and `action`.
+- `summary` includes at least `blocksAvailable`, `blocksStaged`, `finalScaffoldCellsBuilt`, `temporaryBlocksUsed`, `recoverableBlocksRemaining`, `statesExpanded`, `maxQueueSize`, `macrosAccepted`, `macrosRejected`, and `solutionLength` when solved.
+- Default output must not include large rejected state lists, full search trees, raw state keys, failed tactical replay logs, repeated equivalent failures, full candidate scoring tables, or full macro step traces.
+- Detailed diagnostics are emitted only with `--debug-trace`, including `macroPlan.steps`, `macroPlan.rejectedSteps`, failed tactical replays, failure signatures, pruned equivalent states or failure counts, candidate scaffold scoring, raw canonical state keys, rejected candidate plans, and per-macro preconditions/targets/raw actions/start/end keys.
+- Solved `--debug-trace` output may include optional state-by-state replay text for human inspection; default output must not include that replay text.
+
+Non-solved `failureCategory` values:
+
+- `RESOURCE_DEFICIT`
+- `NO_GOAL_APPROACH`
+- `UNREACHABLE_STOCKPILE`
+- `NEEDED_BLOCK_COVERED`
+- `TEMPORARY_BLOCK_NOT_RECOVERABLE`
+- `PLAYER_TRAP_RISK`
+- `FINAL_SCAFFOLD_UNBUILDABLE`
+- `TACTICAL_REPLAY_FAILED`
+- `MACRO_INVARIANT_FAILED`
+- `SEARCH_BUDGET_UNPROVEN`
+
+Every failure category must map to at least one concrete redesign or solver-improvement lever. Default output exposes only the top three recommendations.
+
+Preflight implementation:
+
+- Run structural validation before search.
+- Build candidate final approach scaffolds from the planner.
+- For each final vertical scaffold candidate with `rise`, compute `requiredFinalScaffoldBlocks = rise * (rise + 1) / 2`.
+- Fail with `FAILED_PREFLIGHT`, `reason: "FINAL_SCAFFOLD_BLOCK_DEFICIT"`, and `statesExpanded: 0` only when every valid final committed scaffold candidate exceeds available blocks.
+- Include `deficitBlocks = requiredFinalScaffoldBlocks - availableBlocks` when `requiredFinalScaffoldBlocks > availableBlocks`.
+- Report `temporaryAccessEstimate`, `recoverableTemporaryBlocks`, and `reuseRequired` as diagnostics. Do not hard-fail on recoverable temporary scaffold estimates.
+- For current canonical level 13 after the CR-0008 15-block revision, run preflight before macro search and explicitly report the lowest non-deficient final scaffold candidate that caused macro solving to continue.
+
+Physics-certified construction-ledger planner implementation:
+
+- Start from the settled state returned by `createInitialState(...)`.
+- Locate the goal and enumerate completion approach cells that can legally move or jump into the goal.
+- Reject blocked approach cells and cells with no possible scaffold candidate.
+- Generate triangular-stair and terrain-assisted scaffold candidates from plausible origins:
+  - nearest existing platform edge;
+  - lower ground under or near the goal shelf;
+  - reachable workbenches;
+  - terrain shelves that reduce final height.
+- Identify initially reachable platform regions without moving blocks.
+- Group blocks by stockpile region.
+- Classify each block as:
+  - immediately free and reachable;
+  - reachable after temporary scaffold;
+  - covered or supporting another block;
+  - likely recoverable after use;
+  - likely stranded if used too early.
+- Build `constructionLedger` objects for candidate plans. Each ledger contains `finalScaffoldCells`, `stagingCells`, `reservedBlocks`, `temporaryCells`, `committedCells`, `workPlatforms`, `requiredCarryUpBlocks`, and `riskFlags`.
+- Represent `reservedBlocks` with canonical block-position selectors, stockpile-region reservations, or reserved block counts. Do not represent reservations with stable block IDs.
+- Build ordered subgoals that collect useful free blocks, place scaffold targets, climb to new work positions, recover temporary access blocks when supply requires reuse, preserve reserved blocks until their ledger phase, and complete the final approach scaffold.
+- Rank candidate plans deterministically by final committed block count, travel from useful stockpiles, stranded/buried block risk, blocked pickup paths, recoverability, and final approach alignment.
+- Preserve rejected plan reasons and try the next ranked plan when the current candidate fails or reaches its local budget.
+- Treat a ledger as dominated when it reaches no additional committed final cells, preserves no better reserved-block set, improves no staging or work-platform reachability, lowers no risk flag, and has no lower action cost than an already explored ledger.
+- Implement and test construction-ledger helpers:
+  - `createConstructionLedger(context, candidatePlan = {})`;
+  - `scoreConstructionLedger(ledger, context = {})`;
+  - `isLedgerDominated(candidateLedger, priorLedger)`;
+  - `scheduleLedgerMacros(context, ledger)`.
+- Implement these required macro operators as named functions with tests:
+  - `identifySupportedScaffoldTargets(context)`;
+  - `classifyBlocks(context)`;
+  - `collectLegalFreeBlock(context, blockSelector)`;
+  - `placeSupportedBlock(context, targetCell)`;
+  - `buildStairOrScaffold(context, scaffoldTargets)`;
+  - `climbToWorkPlatform(context, platformTarget)`;
+  - `recoverTemporaryBlock(context, blockSelector)`;
+  - `completeFinalGoalApproach(context, approachCell)`.
+- Represent every macro step with `macroId`, `type`, `preconditions`, `target`, optional `blockSelector`, `startStateKey`, accepted `endStateKey`, `rawActions`, `status`, and rejected `reason` when applicable.
+- Accept a macro step only after `executeMacroStep(...)` replays raw actions from `startStateKey` through `dispatchGameAction(...)` and confirms the promised state after gravity.
+- Reject macros that propose unsupported scaffold cells, unreachable or covered blocks, supporting-block pickup, invalid placement, player trap risk, block creation/deletion/teleport, or promised-state mismatch.
+
+Validity search implementation:
+
+- Use a deterministic priority queue guided by macro planner rank and active subgoal score.
+- Use raw-action search only inside the tactical executor for the current ledger/macro step, bounded by the macro's preconditions, target, reachable region, and local budget.
+- Implement `canonicalizeState(state, levelId)` so it returns the normalized fields used by solver equality and debug output.
+- Implement `createStateKey(state)` so it returns a deterministic string containing `levelId`, `status`, player row/col, `facing`, carried-block state as carrying/not-carrying with no persistent block ID, and sorted uncarried block positions as `{row,col}` pairs.
+- Implement `expandLegalActions(state, level, contract)` so it calls `dispatchGameAction(...)` for only `moveLeft`, `moveRight`, `jump`, and `interact`, drops `invalid: true` transitions, and returns engine-settled next states.
+- Skip states already reached with an equal or lower action count.
+- Penalize equivalent no-progress pickup/place cycles while preserving legal reuse that changes world state.
+- `createFailureSignature(report)` returns an object with `candidatePlanId`, `approachCell`, `committedScaffoldCells`, `filledScaffoldTargets`, `reachableRegions`, `strandedBlocks`, `blockedPickupCells`, `unrecoverableTemporaryBlocks`, and `reason`.
+- `isFailureDominated(candidateSignature, priorSignature)` returns true only when the candidate has no additional filled scaffold target, no additional reachable region, no fewer stranded blocks, no fewer blocked pickup cells, and no lower action count than the prior signature.
+- Skip equivalent failure signatures and dominated candidate plans; increment `prunedSimilarFailures` for each skipped retry.
+- Return `UNSOLVABLE_EXHAUSTED` only after all candidate plans have no remaining unvisited non-dominated states. Return `UNPROVEN_WITHIN_LIMIT` when the state budget ends before that condition.
+- Stop on the first completed state.
+- Emit replayable actions and planner diagnostics.
+- Do not hardcode benchmark-specific action lists or mutate board state outside engine replay. A reported `SOLVED` result for levels 10, 13, or 14 must come from the shared solver architecture.
+
+Current canonical benchmark implementation:
+
+- Current canonical level 13 means `levelId === 13` after the accepted CR-0008 row update, with `availableBlocks === 15`, resource-manifest `requiredBlocks === 12`, resource-manifest `surplusBlocks === 3`, and solver preflight `requiredFinalScaffoldBlocks === 15`.
+- The project owner has manually completed current level 13 in roughly 230 moves, so final validity mode for current canonical level 13 must return `SOLVED` with macro-plan steps plus a flattened replayable raw action list.
+- Current canonical levels 10 and 14 are required generalization benchmarks. They must return `SOLVED` with replayable raw actions through the same canonical state-space solver, construction-ledger rules, tactical executor, and output contract as level 13.
+- Treat final `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED` for current canonical level 13 as `LEVEL_SOLVER_LEVEL13_UNPROVEN` and `LEVEL_SOLVER_BENCHMARK_UNPROVEN`, then stop implementation for solver-plan revision or a solver-focused Change Request.
+- Treat final `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED` for current canonical level 10 or 14 as `LEVEL_SOLVER_BENCHMARK_UNPROVEN`, then stop implementation for solver-plan revision or a solver-focused Change Request.
+- Do not propose current-level geometry redesign from a non-solved Level 13 solver result unless a later Change Request supersedes the manual solvability evidence.
+- If current level 13 is not `SOLVED` during development, default output must include `phase`, `failedInvariant`, `failureCategory`, `cause`, `topRecommendations` capped at three, and summary metrics for block availability, staging, scaffold progress, temporary blocks, recoverable blocks, states expanded, accepted macros, and rejected macros.
+- If `--debug-trace` is passed for current level 13, output must include the failed macro operator, rejected macro steps, failed tactical replay details, failure signatures, pruned equivalent states, candidate scaffold scoring, and raw state keys needed to revise the solver.
+- Do not special-case level 13 with hardcoded action lists, board mutations, or assumptions that fail level 10 or level 14.
+
+Analyzer implementation:
+
+- Run after a solved validity report or an explicitly requested diagnostic report.
+- Compute summary metrics: `shortestFoundActions`, `pickups`, `placements`, `uniqueBlocksUsed`, `reusedBlockCount`, `unusedBlocks`, `maxStackHeight`, `maxPlayerElevation`, `peakCommittedBlocks`, and `statesExpanded`.
+- Compute difficulty signals: `irreversibleDeadEndsFound`, `lateDeadEndsFound`, `nearGoalDeadEndsFound`, `resourceStrandingDeadEnds`, `misleadingProgressStates`, `solutionOrderSensitivity`, and unintended bypass evidence.
+- Emit recommendations with `type`, `priority`, `reason`, and `action`.
+- Recommendation actions must be copy-ready design guidance such as add reachable blocks, remove surplus blocks, move a stockpile, raise/lower a shelf, force platform order, make block reuse necessary, reduce a bypass route, or rerun validity after an edit.
+
 ### JS solution test
 
-Create `tests/js/level-solutions.test.js` exporting `run()` and using only Node built-ins:
+Create or update `tests/js/level-solutions.test.js` exporting `run()` and using only Node built-ins:
 
 - Import `readFileSync` from `node:fs`.
 - Import `assert` from `node:assert/strict`.
@@ -223,7 +527,7 @@ Create `tests/js/level-solutions.test.js` exporting `run()` and using only Node 
   - assign `state = result.state`;
   - after all actions, assert `state.status === "completed"`.
 
-Update `tests/js/run-tests.mjs` to import and run it after engine tests:
+Update `tests/js/run-tests.mjs` to import and run it after solver tests:
 
 ```js
 import { run as runLevelSolutions } from './level-solutions.test.js';
@@ -234,6 +538,7 @@ Expected final output:
 ```text
 ok physics
 ok engine
+ok solver
 ok level solutions
 All JS tests passed
 ```
@@ -400,19 +705,289 @@ Expected tests: `tests/test_level_validation.py` passes.
 
 Expected: all backend tests pass with the known Starlette deprecation warning only if it already appears locally.
 
+### Task 4A: Stack-stability engine behavior
+
+**Files:**
+
+- Modify `frontend/js/engine.js`
+- Modify `tests/js/engine.test.js`
+
+- [ ] Add an engine test where the player faces a lower block that has another block directly above it.
+- [ ] Assert `interact` returns `invalid: true`, `changed: false`, unchanged `moves`, unchanged `history`, and message `Block is supporting another block.`
+- [ ] Add or preserve an engine test proving pickup still succeeds when the adjacent block has no block directly above it.
+- [ ] Run the JS suite and confirm the new stack-stability test fails before implementation:
+
+```bash
+node tests/js/run-tests.mjs
+```
+
+Expected before implementation: the supporting-block pickup assertion fails because current pickup logic checks only the adjacent cell.
+
+- [ ] Implement the stack-stability guard in `frontend/js/engine.js` without changing placement, gravity, movement, jump, reset, or undo behavior.
+- [ ] Re-run:
+
+```bash
+node tests/js/run-tests.mjs
+```
+
+Expected after implementation: existing physics/engine tests and the new stack-stability assertions pass.
+
+### Task 4B: Resource manifest, level 13 revision, and resource validation
+
+**Files:**
+
+- Create or update `tests/fixtures/level_resource_requirements.json`
+- Modify `tests/test_level_validation.py`
+- Modify `backend/app/services/level_service.py`
+- Modify `tools/validate_levels.py`
+- Modify `docs/intake/candidate_levels_6_20.json`
+- Modify `backend/app/data/levels.json`
+
+- [ ] Create or update `tests/fixtures/level_resource_requirements.json` with exactly one entry for each level ID `6..20`.
+- [ ] For level 13, include exactly these segments:
+
+```json
+[
+  { "name": "ground-to-workbench", "fromRow": 12, "toRow": 9 },
+  { "name": "workbench-to-goal", "fromRow": 9, "toRow": 6 }
+]
+```
+
+- [ ] Add backend validation tests for:
+  - happy-path resource analysis returns 15 reports;
+  - level 13 reports `availableBlocks == 15`, `requiredBlocks == 12`, and `surplusBlocks == 3`;
+  - a synthetic under-resourced manifest/level raises `LEVEL_RESOURCE_DEFICIT`;
+  - malformed resource manifest shape or ID coverage raises `LEVEL_RESOURCE_MANIFEST_INVALID`.
+- [ ] Update level 13 row 12 in both `docs/intake/candidate_levels_6_20.json` and `backend/app/data/levels.json` to:
+
+```json
+"#PBBBBBB.B.B.B.B.B.B.B..#"
+```
+
+- [ ] Implement `analyze_level_resources(...)` in `backend/app/services/level_service.py`.
+- [ ] Update `tools/validate_levels.py` to parse optional `--resource-source tests/fixtures/level_resource_requirements.json`.
+- [ ] Make CLI resource validation run against the canonical level file, not the intake candidate file.
+- [ ] Run:
+
+```bash
+python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
+python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
+python3 -m json.tool backend/app/data/levels.json >/dev/null
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python -m pytest tests/test_level_validation.py
+```
+
+Expected output includes:
+
+```text
+Validated 20 levels from backend/app/data/levels.json
+Validated resources for 15 levels from tests/fixtures/level_resource_requirements.json
+```
+
+Expected tests: resource tests and existing level-validation tests pass.
+
+### Task 4C: Solver tests and expectations
+
+**Files:**
+
+- Create or update `tests/fixtures/level_solver_expectations.json`
+- Create or update `tests/js/solver.test.js`
+- Modify `tests/js/run-tests.mjs`
+
+- [ ] Create or update `tests/fixtures/level_solver_expectations.json` with version `0.1.0`.
+- [ ] Include expected solver budgets:
+  - level 1: `SOLVED`, `maxStates=500`, `maxTimeMs=1000`;
+  - levels 2-10: `SOLVED` with deterministic per-level `maxStates` budgets chosen after the first local benchmark and kept comfortably above observed counts;
+  - level 10: `SOLVED`, `maxStates=1000000`, `maxTimeMs=30000`, `requiresConstructionLedger=true`, and `requiresReplay=true`;
+  - under-resourced synthetic fixture: `FAILED_PREFLIGHT`, `failureCategory="RESOURCE_DEFICIT"`, `cause` naming the final scaffold deficit, and `summary.statesExpanded=0`;
+  - current canonical level 13: `status="SOLVED"`, `maxStates=1000000`, `maxTimeMs=30000`, `minActions=1`, `maxActions=1000`, `requiresConstructionLedger=true`, `requiresMacroPlan=true`, `requiresReplay=true`, and `requiresCarryUpReservation=true`;
+  - level 14: `SOLVED`, `maxStates=1000000`, `maxTimeMs=30000`, `requiresConstructionLedger=true`, and `requiresReplay=true`;
+  - synthetic tiny solved fixture: `SOLVED` and replayable actions;
+  - canonical-state permutation fixture: two states with identical player row/col, facing, carry presence, level status, and sorted uncarried block positions but different engine-internal block IDs produce the same state key;
+  - invalid-action fixture: invalid `moveLeft`, `moveRight`, `jump`, or `interact` results are not enqueued as solver states;
+  - construction-ledger fixtures: reserved block consumed early, unrecoverable temporary block marked recoverable, committed scaffold cell disturbed, and dominated ledger pruned;
+  - synthetic no-progress stress fixture: state-key deduplication prevents repeated equivalent pickup/place cycles from dominating search;
+  - synthetic repeated-bad-plan fixture: failure-signature dominance pruning skips equivalent or dominated failed candidate plans and reports `prunedSimilarFailures > 0`.
+- [ ] Include required default output fields:
+  - `status`;
+  - `levelId`;
+  - `phase`;
+  - `failedInvariant`;
+  - `failureCategory`;
+  - `cause`;
+  - `topRecommendations`;
+  - `summary.blocksAvailable`;
+  - `summary.blocksStaged`;
+  - `summary.finalScaffoldCellsBuilt`;
+  - `summary.temporaryBlocksUsed`;
+  - `summary.recoverableBlocksRemaining`;
+  - `summary.statesExpanded`;
+  - `summary.maxQueueSize`;
+  - `summary.macrosAccepted`;
+  - `summary.macrosRejected`;
+  - `summary.solutionLength` when solved;
+  - `debugTraceAvailable`.
+- [ ] Include required debug-trace field lists:
+  - `macroPlan.steps`;
+  - `macroPlan.rejectedSteps`;
+  - failed tactical replay records;
+  - failure signatures;
+  - pruned equivalent state or failure counts;
+  - candidate scaffold scoring;
+  - raw canonical state keys.
+  - optional state-by-state text replay for solved benchmark results.
+- [ ] Include the allowed non-solved failure categories exactly:
+  - `RESOURCE_DEFICIT`;
+  - `NO_GOAL_APPROACH`;
+  - `UNREACHABLE_STOCKPILE`;
+  - `NEEDED_BLOCK_COVERED`;
+  - `TEMPORARY_BLOCK_NOT_RECOVERABLE`;
+  - `PLAYER_TRAP_RISK`;
+  - `FINAL_SCAFFOLD_UNBUILDABLE`;
+  - `TACTICAL_REPLAY_FAILED`;
+  - `MACRO_INVARIANT_FAILED`;
+  - `SEARCH_BUDGET_UNPROVEN`.
+- [ ] Add `tests/js/solver.test.js` using Node built-ins only.
+- [ ] Import solver functions from `../../tools/solve-levels.mjs`.
+- [ ] Assert solver output statuses are restricted to the SPEC-0004 status vocabulary.
+- [ ] Assert `canonicalizeState(...)` captures only `levelId`, `status`, player row/col, facing, carrying/not-carrying, and sorted uncarried block positions.
+- [ ] Assert `createStateKey(...)` returns identical keys for block-identity permutations and equivalent states reached by different no-progress action sequences.
+- [ ] Assert `createStateKey(...)` returns distinct keys when player row/col, facing, carry presence, level status, or sorted uncarried block positions differ.
+- [ ] Assert `expandLegalActions(...)` enqueues only engine-settled legal `moveLeft`, `moveRight`, `jump`, and `interact` transitions and drops `invalid: true` results.
+- [ ] Assert construction ledgers include `finalScaffoldCells`, `stagingCells`, `reservedBlocks`, `temporaryCells`, `committedCells`, `workPlatforms`, `requiredCarryUpBlocks`, and `riskFlags`.
+- [ ] Assert ledger fixtures reject early reserved-block consumption, unrecoverable temporary recovery claims, disturbed committed cells, and dominated ledgers.
+- [ ] Assert `createFailureSignature(...)` includes `candidatePlanId`, `approachCell`, `committedScaffoldCells`, `filledScaffoldTargets`, `reachableRegions`, `strandedBlocks`, `blockedPickupCells`, `unrecoverableTemporaryBlocks`, and `reason`.
+- [ ] Assert `isFailureDominated(...)` returns true for an equivalent or worse failed plan and false when a candidate unlocks a new reachable region, fills a new scaffold target, reduces stranded blocks, reduces blocked pickup cells, or has a lower action count.
+- [ ] Assert level 1 solves under 500 expanded states and under 1000 ms locally.
+- [ ] Assert known solved levels 2-10 return `SOLVED` within their fixture budgets.
+- [ ] Assert the under-resourced fixture returns `FAILED_PREFLIGHT`, `failureCategory === "RESOURCE_DEFICIT"`, and `summary.statesExpanded === 0`.
+- [ ] Assert current canonical level 10 returns `SOLVED` within `maxStates=1000000` and `maxTimeMs=30000`.
+- [ ] Assert current canonical level 13 returns `SOLVED` within `maxStates=1000000` and `maxTimeMs=30000`.
+- [ ] Assert current canonical level 13 returns accepted macro steps and a flattened raw action list.
+- [ ] Assert current canonical level 13 raw actions replay through `dispatchGameAction(...)` from `createInitialState(...)` and complete the level.
+- [ ] Assert current canonical level 14 returns `SOLVED` within `maxStates=1000000` and `maxTimeMs=30000`.
+- [ ] Assert solved benchmark outputs include `solutionLength`, `statesExpanded`, `maxQueueSize`, and `actions`.
+- [ ] Assert any non-solved synthetic output uses one of the allowed failure categories and includes at least one and at most three `topRecommendations`.
+- [ ] Assert every allowed failure category has at least one mapped redesign or solver-improvement recommendation lever.
+- [ ] Assert default non-solved output does not include rejected state lists, full search trees, raw state keys, failed tactical replay logs, repeated equivalent failures, full candidate scoring tables, or full macro traces.
+- [ ] Assert `--debug-trace` output includes macro-plan steps, rejected macro steps, tactical replay failures, failure signatures, pruned equivalent states, candidate scoring, and raw state keys.
+- [ ] Assert the repeated-bad-plan fixture reports `prunedSimilarFailures > 0`.
+- [ ] Assert a solved report's actions replay through `dispatchGameAction(...)` and complete the level.
+- [ ] Assert running the same solver command twice returns the same status, first action sequence, state count, planner chosen candidate rank, and recommendation types.
+- [ ] Assert macro planner diagnostics include supported scaffold targets, block classifications, goal approach cells, candidate scaffolds, chosen candidate rank, stockpile regions, subgoals, and rejected candidate reasons when `--debug-trace` is used.
+- [ ] Add synthetic invalid macro fixtures for floating target placement, supporting-block pickup, promised-state mismatch, unreachable covered block, temporary block not recoverable, player trap risk, and tactical replay failure.
+- [ ] Assert solver output for levels 10, 13, and 14 is not generated from per-level hardcoded action lists or per-level board mutations by checking the same exported planning functions are called and the final actions replay from the unmodified level data.
+- [ ] Assert analyzer reports summary metrics, difficulty signals, and actionable recommendations with `type`, `priority`, `reason`, and `action`.
+- [ ] Update `tests/js/run-tests.mjs` so solver tests run before solution replay tests.
+- [ ] Run:
+
+```bash
+node tests/js/run-tests.mjs
+```
+
+Expected before solver implementation: solver test import or assertion failures. Existing physics and engine assertions should still pass.
+
+### Task 4D: Implement deterministic solver/analyzer CLI
+
+**Files:**
+
+- Create or update `tools/solve-levels.mjs`
+
+- [ ] Implement exported functions from the deterministic solver/analyzer CLI contract.
+- [ ] Implement CLI parsing for `--mode`, `--level`, `--all`, `--max-states`, optional `--format`, and optional `--debug-trace`.
+- [ ] Implement structural preflight and final committed scaffold lower-bound checks.
+- [ ] Implement default layered output with `status`, `levelId`, `phase`, `failedInvariant`, `failureCategory`, `cause`, capped `topRecommendations`, `summary`, optional `actions`, and `debugTraceAvailable`.
+- [ ] Implement `createDefaultReport(report)` so default output omits large rejected state lists, full search trees, raw state keys, failed tactical replay logs, repeated equivalent failures, full candidate scoring tables, and full macro step traces.
+- [ ] Implement `createDebugTrace(report)` so `--debug-trace` adds macro-plan steps, rejected macro steps, failed tactical replays, failure signatures, pruned equivalent states, candidate scaffold scoring, raw canonical state keys, rejected candidates, and per-macro preconditions/targets/raw actions/start/end keys.
+- [ ] Implement optional debug-only state-by-state replay text for solved benchmark results.
+- [ ] Implement `canonicalizeState(state, levelId)`, `createStateKey(state)`, and `expandLegalActions(state, level, contract)` before macro or ledger search logic.
+- [ ] Ensure canonical solver equality treats blocks as interchangeable and excludes engine-internal block IDs.
+- [ ] Ensure `expandLegalActions(...)` uses only `dispatchGameAction(...)` results, does not enqueue `invalid: true` transitions, and does not implement independent gravity, collision, support, pickup, placement, or completion logic.
+- [ ] Implement goal approach enumeration, scaffold candidate generation, stockpile/platform region detection, block classification, subgoal generation, candidate ranking, and rejected candidate reasons.
+- [ ] Implement `createConstructionLedger(context, candidatePlan = {})`, `scoreConstructionLedger(ledger, context = {})`, `isLedgerDominated(candidateLedger, priorLedger)`, and `scheduleLedgerMacros(context, ledger)`.
+- [ ] Ensure each construction ledger contains `finalScaffoldCells`, `stagingCells`, `reservedBlocks`, `temporaryCells`, `committedCells`, `workPlatforms`, `requiredCarryUpBlocks`, and `riskFlags`.
+- [ ] Ensure `reservedBlocks` uses canonical block-position selectors, stockpile-region reservations, or reserved block counts, never stable block IDs.
+- [ ] Implement `identifySupportedScaffoldTargets(context)` to enumerate in-bounds empty candidate scaffold cells that are supported by terrain or a block after replay.
+- [ ] Implement `classifyBlocks(context)` to classify blocks as reachable, free, covered, useful, temporary, recoverable, stranded, or final-committed for the active plan.
+- [ ] Implement `collectLegalFreeBlock(context, blockSelector)` so it rejects unreachable, covered, or supporting blocks before tactical replay.
+- [ ] Implement `placeSupportedBlock(context, targetCell)` so it rejects target cells that are occupied, unsupported, unreachable, or fail replay after gravity settles.
+- [ ] Implement `buildStairOrScaffold(context, scaffoldTargets)` so it builds one supported cell at a time using legal collect/place macro steps.
+- [ ] Implement `climbToWorkPlatform(context, platformTarget)` so the player reaches the next work platform through raw engine actions before the next macro can commit.
+- [ ] Implement `recoverTemporaryBlock(context, blockSelector)` so temporary blocks are recovered only when reachable, free, and not supporting another block.
+- [ ] Implement `completeFinalGoalApproach(context, approachCell)` so the final movement sequence reaches the goal through raw engine actions after the committed scaffold exists.
+- [ ] Implement `executeMacroStep(context, macroStep)` so every macro is accepted only after raw `dispatchGameAction(...)` replay reaches the promised state after gravity.
+- [ ] Implement deterministic priority-queue macro validity search using construction-ledger scoring, canonical state-key deduplication, and no-progress cycle penalties.
+- [ ] Use raw-action search only inside tactical macro execution, bounded by the macro's preconditions, target, reachable region, and local budget.
+- [ ] Implement `createFailureSignature(report)`.
+- [ ] Implement `isFailureDominated(candidateSignature, priorSignature)`.
+- [ ] Implement equivalent-failure and dominated-plan pruning; increment `prunedSimilarFailures` when a similar bad plan is skipped.
+- [ ] Implement current canonical benchmark validation so final `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED` for level 13 is reported as `LEVEL_SOLVER_LEVEL13_UNPROVEN` and `LEVEL_SOLVER_BENCHMARK_UNPROVEN`, and the same final non-solved statuses for levels 10 or 14 are reported as `LEVEL_SOLVER_BENCHMARK_UNPROVEN`.
+- [ ] Implement current canonical level 13 as a known-solvable benchmark that must return `SOLVED` with macro plan steps plus a flattened replayable raw action list.
+- [ ] Implement levels 10 and 14 as known-solvable benchmark gates that must return `SOLVED` with flattened replayable raw actions through the same solver architecture.
+- [ ] Implement analyzer summary metrics, difficulty signals, and actionable redesign recommendations.
+- [ ] Map every non-solved failure category to at least one concrete redesign or solver-improvement recommendation lever.
+- [ ] Keep the solver read-only. Do not update `tests/fixtures/level_solutions.json` automatically.
+- [ ] Run:
+
+```bash
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
+node tests/js/run-tests.mjs
+```
+
+Expected after implementation:
+
+- Level 1 reports `SOLVED`, fewer than 500 expanded states, and `timeMs < 1000`.
+- Under-resourced synthetic equivalent reports `FAILED_PREFLIGHT`, `failureCategory="RESOURCE_DEFICIT"`, and `summary.statesExpanded=0`.
+- Current canonical level 13 reports `SOLVED` with macro plan steps and a flattened replayable raw action list.
+- Current canonical level 13 raw action replay completes through `dispatchGameAction(...)`.
+- Current canonical levels 10 and 14 report `SOLVED` with flattened replayable raw action lists through the same solver architecture.
+- Solved benchmark reports include `solutionLength`, `statesExpanded`, `maxQueueSize`, and `actions`.
+- Canonical state-key tests prove block identity permutations collapse to one solver key and invalid actions are not enqueued.
+- Construction-ledger tests prove required fields are present, reserved blocks are not consumed early, temporary recovery claims are legal, committed cells are not disturbed, and dominated ledgers are pruned.
+- `--debug-trace` output for current level 13 includes accepted macro steps, rejected macro steps if any, failed tactical replays if any, failure signatures if any, pruned equivalent states, candidate scaffold scoring, and raw state keys.
+- Repeated-bad-plan fixture reports `prunedSimilarFailures > 0`.
+- Analyzer output includes metrics, difficulty signals, and actionable recommendations.
+- JS suite reaches the existing solution fixture coverage failure only if levels 11-20 are still missing.
+
+### Task 4E: Solver-guided redesign evidence
+
+**Files:**
+
+- Modify `tests/fixtures/level_solver_expectations.json`
+- Modify `docs/status/CURRENT_STATE.md`
+- Modify `docs/handoff/` only if the solver stops before solution evidence and the next agent needs restart context.
+
+- [ ] Run solver validity on benchmark levels 10, 13, and 14 plus levels 11-20 using the accepted budgets.
+- [ ] Capture solver statuses and key diagnostics in `docs/status/CURRENT_STATE.md`.
+- [ ] For current canonical level 13, require `SOLVED`; copy candidate actions into `tests/fixtures/level_solutions.json` during Task 5 and let replay prove them.
+- [ ] For current canonical levels 10 and 14, require `SOLVED`; copy candidate actions into `tests/fixtures/level_solutions.json` during Task 5 if their solution entries need replacement and let replay prove them.
+- [ ] If current canonical level 13 returns `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED`, stop and open a solver-focused Change Request or revise the solver plan. Do not open a current-level geometry Change Request from this tool result unless a later accepted Change Request supersedes the owner-confirmed manual solvability evidence.
+- [ ] If current canonical level 10 or 14 returns `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED`, stop and open a solver-focused Change Request or revise the solver plan. Do not treat the result as automatic geometry-redesign evidence because the project owner has confirmed current levels are solvable.
+- [ ] If current canonical level 13 is unsolved during development, copy default output fields into `docs/status/CURRENT_STATE.md`: `phase`, `failedInvariant`, `failureCategory`, `cause`, capped `topRecommendations`, and `summary`.
+- [ ] If current canonical level 13 is unsolved during development, rerun with `--debug-trace` and copy only the concise failure evidence needed for the next solver Change Request or handoff: failed macro operator, failed tactical replay summary, representative failure signature, pruned-equivalent count, and candidate scaffold scoring summary.
+- [ ] If any other level returns `FAILED_PREFLIGHT`, `UNSOLVABLE_EXHAUSTED`, or `UNPROVEN_WITHIN_LIMIT`, inspect default recommendations and `--debug-trace` diagnostics. Stop for a Change Request only when the next step is geometry redesign or solver-contract change rather than fixture transcription.
+- [ ] If solver returns `SOLVED`, copy candidate actions into `tests/fixtures/level_solutions.json` during Task 5 and let solution replay prove them.
+
 ### Task 5: Solution evidence harness
 
 **Files:**
 
-- Create `tests/fixtures/level_solutions.json`
-- Create `tests/js/level-solutions.test.js`
+- Create or update `tests/fixtures/level_solutions.json`
+- Create or update `tests/js/level-solutions.test.js`
 - Modify `tests/js/run-tests.mjs`
 
-- [ ] Create the fixture with version `0.1.0`, contractVersion `0.1.0`, and exactly one solution entry per level ID `1..20`.
+- [ ] Create or update the fixture with version `0.1.0`, contractVersion `0.1.0`, and exactly one solution entry per level ID `1..20`.
 - [ ] Add known traces for levels 2-5 from this plan.
-- [ ] Author concrete replay actions for levels 1 and 6-20 by running the existing JS engine locally.
-- [ ] Create `tests/js/level-solutions.test.js` using the JS solution test contract above.
-- [ ] Update `tests/js/run-tests.mjs` to run physics, engine, and level solution suites.
+- [ ] Author or regenerate concrete replay actions for levels 1 and 6-20 by running the existing JS engine and/or `tools/solve-levels.mjs --mode validity` locally after the stack-stability guard, level 13 revision, and CR-0007 solver are in place.
+- [ ] Treat any pre-CR-0006 solution-search output as candidate evidence only; every final fixture action sequence must replay through the updated engine.
+- [ ] Create or update `tests/js/level-solutions.test.js` using the JS solution test contract above.
+- [ ] Update `tests/js/run-tests.mjs` to run physics, engine, solver, and level solution suites.
 - [ ] Run:
 
 ```bash
@@ -424,11 +999,12 @@ Expected output:
 ```text
 ok physics
 ok engine
+ok solver
 ok level solutions
 All JS tests passed
 ```
 
-If any candidate level cannot be completed without invalid actions or mechanics changes, stop and create a Spec-mode Change Request. Do not replace candidate geometry during implementation.
+If any candidate level cannot be completed without invalid actions or mechanics changes, or solver output recommends geometry changes before a replayable solution exists, stop and create a Spec-mode Change Request. Do not replace candidate geometry during implementation.
 
 ### Task 6: Variable-board UI rendering
 
@@ -473,7 +1049,14 @@ This manual inspection is not the final A2 acceptance gate; it is an implementat
 
 ```bash
 python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
 node tests/js/run-tests.mjs
 ```
 
@@ -481,6 +1064,12 @@ node tests/js/run-tests.mjs
   - `SPEC-0004` accepted;
   - `PLAN-0004` active/implemented status;
   - canonical level count is 20 after implementation;
+  - CR-0006 stack-stability and resource validation are implemented after implementation;
+  - CR-0007 solver/analyzer status and representative solver output after implementation;
+  - current canonical level 13 final solver status and required diagnostics if unsolved;
+  - repeated-bad-plan pruning evidence;
+  - resource analysis fixture exists after implementation;
+  - solver expectations fixture exists after implementation;
   - solution evidence fixture exists after implementation;
   - automated checks run;
   - remaining A2 expanded-level human checkpoint.
@@ -496,10 +1085,19 @@ node tests/js/run-tests.mjs
 git status --short
 python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
+python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
 python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null
 .venv/bin/python tools/validate_levels.py
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
 node tests/js/run-tests.mjs
 git diff --check
 git diff --stat
@@ -510,8 +1108,15 @@ Expected pass evidence:
 
 - `tools/validate_levels.py` prints `Validated 20 levels from backend/app/data/levels.json`.
 - Candidate source validation prints `Validated 15 candidate levels from docs/intake/candidate_levels_6_20.json`.
+- Resource validation prints `Validated resources for 15 levels from tests/fixtures/level_resource_requirements.json`.
+- Solver validity for level 1 reports `SOLVED` under 500 states and under 1 second locally.
+- Solver validity for current canonical levels 10, 13, and 14 reports `SOLVED` with macro plan steps and flattened replayable raw action lists.
+- Default current canonical level 13 output is compact and omits debug-only search trees, state keys, tactical replay logs, candidate scoring tables, and full macro traces.
+- `--debug-trace` current canonical level 13 output includes macro-plan steps, rejected macro steps when present, tactical replay failures when present, failure signatures when present, pruned-equivalent counts, candidate scaffold scoring, and raw state keys.
+- Repeated-bad-plan solver fixture reports `prunedSimilarFailures > 0`.
+- Solver validity/analyzer tests pass with deterministic diagnostics and actionable recommendations.
 - Backend tests pass.
-- JS tests print `ok physics`, `ok engine`, `ok level solutions`, and `All JS tests passed`.
+- JS tests print `ok physics`, `ok engine`, `ok solver`, `ok level solutions`, and `All JS tests passed`.
 - `git diff --check` reports no whitespace errors.
 
 ## Validation
@@ -522,10 +1127,19 @@ Required automated validation for implementation completion:
 git status --short
 python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
+python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
 python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null
 .venv/bin/python tools/validate_levels.py
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
 node tests/js/run-tests.mjs
 git diff --check
 ```
@@ -544,6 +1158,7 @@ Manual smoke check covers level selector and board layout for levels 1, 6, 14, 1
 - A2 prerequisite gate: first-playable UX/product checkpoint for levels 1-5 must be accepted before implementation edits begin.
 - A2 completion gate: after automated checks pass, the project owner reviews expanded levels 6-20 for difficulty curve, scaffold feel, visual legibility, and product fit.
 - A3 stop gate: any dependency install/addition, lockfile, network access, generator, solver dependency, CI/deployment change, or frontend framework/build tool requires explicit separate approval and is not part of this plan.
+- Spec stop gate: solver output that requires geometry redesign must be handled through a Change Request before editing level data.
 
 ## Documentation updates
 
@@ -553,7 +1168,11 @@ Manual smoke check covers level selector and board layout for levels 1, 6, 14, 1
 ## Rollback plan
 
 - Revert `backend/app/data/levels.json` to the 5-level version.
+- Revert the CR-0006 level 13 row update in `docs/intake/candidate_levels_6_20.json` if implementation needs to abandon the accepted resource revision.
+- Revert the stack-stability pickup guard in `frontend/js/engine.js` and remove the corresponding assertions from `tests/js/engine.test.js`.
 - Revert `backend/app/services/level_service.py`, `tools/validate_levels.py`, and backend tests to 5-level validation expectations.
+- Remove `tests/fixtures/level_resource_requirements.json` and resource-analysis tests.
+- Remove `tools/solve-levels.mjs`, `tests/js/solver.test.js`, and `tests/fixtures/level_solver_expectations.json`.
 - Remove `tests/fixtures/level_solutions.json` and `tests/js/level-solutions.test.js`; revert `tests/js/run-tests.mjs`.
 - Revert variable-board CSS/renderer changes if they cause regressions.
 - Restore `docs/repo-map.md` and `docs/status/CURRENT_STATE.md` to their pre-PLAN-0004 implementation state.
@@ -570,14 +1189,55 @@ Manual smoke check covers level selector and board layout for levels 1, 6, 14, 1
   - Mitigation: update backend tests in the same task and preserve file/root/not-found codes.
 - Risk: difficulty quality cannot be proven automatically.
   - Mitigation: keep expanded-level A2 human review after automated completion.
+- Risk: stack-stability invalidates previously found solution traces.
+  - Mitigation: regenerate and replay every level solution after implementing the pickup guard.
+- Risk: deterministic resource analysis is only a lower-bound diagnostic and can pass a still-unsolvable level.
+  - Mitigation: keep JS replay mandatory and stop if any level cannot be completed through the engine.
+- Risk: resource fixture rows encode author intent and may drift from later level geometry.
+  - Mitigation: resource validation checks row bounds and ID coverage; future geometry changes require updating the fixture in the same accepted scope.
+- Risk: solver search can wander through legal but unproductive actions.
+  - Mitigation: add preflight lower bounds, goal-directed planning, priority search, canonical state-key deduplication, no-progress penalties, and level 1 performance gates.
+- Risk: solver search can retry similar failed plan shapes that strand the same resources.
+  - Mitigation: add `createFailureSignature(...)`, `isFailureDominated(...)`, repeated-bad-plan fixture coverage, and `prunedSimilarFailures` evidence.
+- Risk: current canonical level 13 returns any final non-solved status after CR-0009.
+  - Mitigation: treat final `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED` as `LEVEL_SOLVER_LEVEL13_UNPROVEN` because the owner has manually completed the level; stop for solver-plan revision or a solver-focused Change Request before any level geometry decision.
+- Risk: solver passes level 13 through assumptions that do not generalize.
+  - Mitigation: CR-0010 requires the same engine-backed canonical state-space solver, construction ledger, and replay proof to solve levels 10 and 14, with no per-level hardcoded action lists or board mutations.
+- Risk: solver equality accidentally depends on engine-internal block IDs.
+  - Mitigation: canonical state fixtures prove block identity permutations collapse to one state key while player position, facing, carried presence, level status, and sorted block positions remain distinct.
+- Risk: construction-ledger planning consumes reserved or temporary blocks in ways a human would later need.
+  - Mitigation: ledger fixtures cover early reserved-block consumption, unrecoverable temporary cells, disturbed committed cells, and dominated ledgers.
+- Risk: solver recommendations are treated as automatic design changes.
+  - Mitigation: solver/analyzer output is advisory; level geometry changes still require accepted Change Requests.
+- Risk: layered solver output becomes too verbose for level-design use.
+  - Mitigation: default output is compact and capped at three recommendations; detailed macro, tactical replay, state-key, scoring, and pruning evidence is emitted only with `--debug-trace`.
+- Risk: macro reasoning bypasses engine physics.
+  - Mitigation: every macro must decompose into raw `dispatchGameAction(...)` replay before it can commit state, and tests cover floating placements, supporting-block pickup, promised-state mismatch, and tactical replay failure.
 
 ## Stop conditions
 
 - First-playable A2 checkpoint is not explicitly accepted before implementation.
 - `docs/intake/candidate_levels_6_20.json` is missing, malformed, or differs from SPEC-0004's candidate table.
 - Levels 1-5 need edits without an accepted Change Request.
+- Level 13 cannot be made resource-valid with the exact CR-0008 row update.
+- Any level 6-20 reports `LEVEL_RESOURCE_DEFICIT` after resource fixture and level data updates.
 - Any level 6-20 cannot be completed by a concrete action sequence through the existing engine.
-- Implementation requires new mechanics, new tile symbols, changed action names, changed API route shapes, or backend-owned gameplay simulation.
+- Solver level 1 validity cannot meet the under-500-state and under-1-second gate.
+- Solver output is nondeterministic for identical inputs and options.
+- Current canonical level 13 returns final `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED` instead of `SOLVED` with replayable macro-derived raw actions.
+- Current canonical level 10 or 14 returns final `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED` instead of `SOLVED` with replayable macro-derived raw actions.
+- Solver state equivalence depends on engine-internal block IDs, omits level ID/status/player/facing/carry/block positions, or enqueues invalid engine actions as new states.
+- Construction ledger omits `finalScaffoldCells`, `stagingCells`, `reservedBlocks`, `temporaryCells`, `committedCells`, `workPlatforms`, `requiredCarryUpBlocks`, or `riskFlags`.
+- Construction ledger consumes a reserved block early, marks an unrecoverable temporary cell recoverable, disturbs a committed cell without replay proof, or fails to prune a dominated ledger.
+- Default solver output for any non-solved result omits `phase`, `failedInvariant`, `failureCategory`, `cause`, capped `topRecommendations`, or required `summary` metrics.
+- Default solver output includes debug-only large rejected state lists, full search trees, raw state keys, failed tactical replay logs, repeated equivalent failures, full candidate scoring tables, or full macro traces.
+- `--debug-trace` output omits macro-plan steps, rejected macro steps, failed tactical replay evidence when present, failure signatures when present, pruned-equivalent counts, candidate scoring, or raw state keys.
+- A macro is accepted without legal raw engine replay or violates support, reachability, block conservation, supporting-block pickup, placement, trap-risk, or promised-state invariants.
+- Solver repeats an equivalent or dominated failed candidate plan without pruning it.
+- Repeated-bad-plan fixture does not report `prunedSimilarFailures > 0`.
+- Solver implementation requires a dependency, network access, reimplemented gameplay physics, or runtime/browser solver behavior.
+- Solver/analyzer recommends geometry changes before a replayable solution exists.
+- Implementation requires new mechanics beyond CR-0006 stack-stability, new tile symbols, changed action names, changed API route shapes, or backend-owned gameplay simulation.
 - Implementation requires reading `docs/intake/PROJECT_OVERVIEW_RAW.md` or `.superpowers/brainstorm/` artifacts to decide behavior.
-- Implementation requires dependency/network/lockfile/CI/deployment/framework/generator/solver work.
+- Implementation requires dependency/network/lockfile/CI/deployment/framework/generator/solver-dependency work.
 - Manual smoke check shows large boards cannot be made usable within the existing vanilla DOM/CSS approach.

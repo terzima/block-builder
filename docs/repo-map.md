@@ -1,8 +1,8 @@
 # Repo Map
 
-Status: First playable implemented (BATCH-0003 complete — pending A2 human UX checkpoint)
+Status: PLAN-0004 ready for implementation after CR-0010 solver hardening
 Maturity: M3
-Last updated: 2026-06-10
+Last updated: 2026-06-11
 
 ## Purpose
 
@@ -105,8 +105,21 @@ bash -n scripts/agent/*.sh .githooks/*
 python3 -m py_compile scripts/agent/*.py .codex/hooks/*.py
 python3 -m json.tool shared/app_contract.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
+python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
+python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
+python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null
 .venv/bin/python tools/validate_levels.py
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
+node tests/js/run-tests.mjs
 ```
 
 ## Backend setup and run commands (current — BATCH-0002 complete)
@@ -119,6 +132,8 @@ A3 dependency/network approval is required before running install commands.
 
 # Validate level data:
 .venv/bin/python tools/validate_levels.py
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
 
 # Run backend tests:
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
@@ -131,6 +146,11 @@ A3 dependency/network approval is required before running install commands.
 
 ```bash
 # Run JS engine/physics tests:
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
 node tests/js/run-tests.mjs
 
 # Start backend server (required for browser play):

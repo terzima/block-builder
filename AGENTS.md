@@ -200,7 +200,7 @@ Before completion:
 
 Specs, plans, and batch plans should contain task-specific implementation truth, not copies of this file.
 
-- Use the repo-local `controlled-planning-docs` skill when writing or revising specs, plans, or batch plans.
+- Use the repo-local `controlled-planning-docs` skill when writing or revising specs, plans, batch plans, Change Requests, status dashboards, handoffs, repo maps, or other durable project documentation.
 - Reference `AGENTS.md` for operating modes, permissions, approval classes, git rules, hooks, and Change Requests.
 - Put mission-critical reusable rules in `AGENTS.md`; put task-local contracts, interfaces, fixtures, and commands in the spec/plan/batch.
 - Delete template prompts and non-applicable sections before accepting a document.
