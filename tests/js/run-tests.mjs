@@ -6,6 +6,8 @@
 
 import { run as runPhysics } from './physics.test.js';
 import { run as runEngine } from './engine.test.js';
+import { run as runSolver } from './solver.test.js';
+import { run as runLevelSolutions } from './level-solutions.test.js';
 
 try {
   runPhysics();
@@ -20,6 +22,22 @@ try {
   console.log('ok engine');
 } catch (err) {
   console.error('FAIL engine:', err.message);
+  process.exit(1);
+}
+
+try {
+  runSolver();
+  console.log('ok solver');
+} catch (err) {
+  console.error('FAIL solver:', err.message);
+  process.exit(1);
+}
+
+try {
+  runLevelSolutions();
+  console.log('ok level solutions');
+} catch (err) {
+  console.error('FAIL level solutions:', err.message);
   process.exit(1);
 }
 
