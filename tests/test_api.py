@@ -36,8 +36,8 @@ def test_levels_list_omits_grids(client):
     r = client.get("/api/v1/levels")
     assert r.status_code == 200
     levels = r.json()["levels"]
-    assert len(levels) == 5
-    assert [lv["id"] for lv in levels] == [1, 2, 3, 4, 5]
+    assert len(levels) == 20
+    assert [lv["id"] for lv in levels] == list(range(1, 21))
     for lv in levels:
         assert "grid" not in lv
 
@@ -50,6 +50,17 @@ def test_level_detail_returns_grid(client):
     assert body["width"] == 8
     assert body["height"] == 6
     assert len(body["grid"]) == 6
+
+
+def test_level_20_detail_returns_variable_grid(client):
+    r = client.get("/api/v1/levels/20")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["title"] == "Final Scaffold Yard"
+    assert body["width"] == 34
+    assert body["height"] == 17
+    assert len(body["grid"]) == 17
+    assert all(len(row) == 34 for row in body["grid"])
 
 
 def test_unknown_level_uses_error_envelope(client):
