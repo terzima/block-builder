@@ -195,6 +195,12 @@ export function dispatchGameAction(state, action, level, contract) {
           return invalidResult(state, 'No block to pick up.');
         }
         const block = state.blocks[blockIdx];
+        const supportingAnotherBlock = state.blocks.some(
+          b => b.row === block.row - 1 && b.col === block.col,
+        );
+        if (supportingAnotherBlock) {
+          return invalidResult(state, 'Block is supporting another block.');
+        }
         const newBlocks = state.blocks.filter((_, i) => i !== blockIdx);
         const next = {
           ...state,

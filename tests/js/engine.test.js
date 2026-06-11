@@ -44,6 +44,19 @@ const LEVEL_1 = {
   ],
 };
 
+const LEVEL_STACKED_PICKUP = {
+  id: 99, slug: 'level-99', title: 'Stacked Pickup',
+  width: 8, height: 6, difficulty: 99,
+  grid: [
+    '########',
+    '#......#',
+    '#......#',
+    '#..B...#',
+    '#.PB..G#',
+    '########',
+  ],
+};
+
 export function run() {
   // ── parseLevel ────────────────────────────────────────────────────────────
 
@@ -177,6 +190,28 @@ export function run() {
   assert.notEqual(pickup.state.carriedBlock, null, 'pickup: carriedBlock set');
   assert.equal(pickup.state.carriedBlock.id, 'b1', 'pickup: correct block carried');
   assert.equal(pickup.state.moves, 1, 'pickup: moves incremented');
+
+  // ── interact: invalid pickup (block supports another block) ──────────────
+
+  const stackedPickup = createInitialState(LEVEL_STACKED_PICKUP, CONTRACT);
+  const blockedSupportPickup = dispatchGameAction(
+    stackedPickup,
+    { type: 'interact' },
+    LEVEL_STACKED_PICKUP,
+    CONTRACT,
+  );
+  assert.equal(blockedSupportPickup.invalid, true, 'support pickup: invalid');
+  assert.equal(blockedSupportPickup.changed, false, 'support pickup: unchanged');
+  assert.equal(
+    blockedSupportPickup.message,
+    'Block is supporting another block.',
+    'support pickup: message',
+  );
+  assert.equal(blockedSupportPickup.state, stackedPickup, 'support pickup: state reference unchanged');
+  assert.equal(blockedSupportPickup.state.moves, 0, 'support pickup: moves unchanged');
+  assert.equal(blockedSupportPickup.state.history.length, 0, 'support pickup: history unchanged');
+  assert.equal(blockedSupportPickup.state.blocks.length, 2, 'support pickup: blocks unchanged');
+  assert.equal(blockedSupportPickup.state.carriedBlock, null, 'support pickup: not carrying');
 
   // ── interact: invalid pickup (no block adjacent) ──────────────────────────
 
