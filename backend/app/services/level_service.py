@@ -12,8 +12,9 @@ from backend.app.schemas import LevelDefinition, LevelMeta, LevelValidationError
 # Tile symbols are resolved from the contract at load time; this set is the
 # required contract value and is also used as the validation target.
 _REQUIRED_TILE_SYMBOLS: frozenset[str] = frozenset({".", "#", "P", "B", "G"})
-_CANONICAL_EXPECTED_IDS: list[int] = list(range(1, 21))
+_CANONICAL_EXPECTED_IDS: list[int] = list(range(1, 51))
 _CANDIDATE_EXPECTED_IDS: list[int] = list(range(6, 21))
+_RESOURCE_EXPECTED_IDS: list[int] = list(range(6, 31))
 _SLUG_PATTERN = "level-{id}"
 _RESOURCE_MANIFEST_VERSION = "0.1.0"
 
@@ -124,9 +125,14 @@ def validate_levels(
 def validate_candidate_levels(
     levels: Any,
     contract: Mapping[str, Any],
+    expected_ids: Sequence[int] | None = None,
 ) -> list[LevelDefinition]:
-    """Validate candidate levels 6-20 from the intake source."""
-    return _validate_level_sequence(levels, contract, _CANDIDATE_EXPECTED_IDS)
+    """Validate candidate levels from an accepted intake source."""
+    return _validate_level_sequence(
+        levels,
+        contract,
+        expected_ids or _CANDIDATE_EXPECTED_IDS,
+    )
 
 
 def analyze_level_resources(
@@ -148,7 +154,7 @@ def analyze_level_resources(
     if not isinstance(entries, list):
         raise _resource_manifest_error("Resource manifest must include a levels array.")
 
-    expected_ids = _CANDIDATE_EXPECTED_IDS
+    expected_ids = _RESOURCE_EXPECTED_IDS
     try:
         manifest_ids = [entry["levelId"] for entry in entries]
     except (TypeError, KeyError):

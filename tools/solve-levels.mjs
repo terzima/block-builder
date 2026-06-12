@@ -6,6 +6,16 @@ import { createInitialState, dispatchGameAction, parseLevel } from '../frontend/
 
 const VERSION = '0.1.0';
 const VALIDITY_ACTIONS = ['moveRight', 'jump', 'interact', 'moveLeft'];
+const TRACE_PHASES = new Set([
+  'collect',
+  'stage',
+  'build_temporary_access',
+  'climb_to_platform',
+  'recover_temporary_blocks',
+  'transfer_between_regions',
+  'build_final_scaffold',
+  'complete_goal_approach',
+]);
 const STATUSES = new Set([
   'SOLVED',
   'FAILED_PREFLIGHT',
@@ -142,6 +152,10 @@ function sortCells(cells = []) {
 
 function sortValues(values = []) {
   return [...values].sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function addUnique(values, value) {
+  if (value && !values.includes(value)) values.push(value);
 }
 
 function uniqueCells(cells) {
@@ -598,6 +612,10 @@ function hasBlockAt(state, cell) {
   return state.blocks.some(block => block.row === cell.row && block.col === cell.col);
 }
 
+function positionMapByBlockId(state) {
+  return new Map(state.blocks.map(block => [block.id, { row: block.row, col: block.col }]));
+}
+
 function blockAtCell(state, cell) {
   return state.blocks.find(block => block.row === cell.row && block.col === cell.col) ?? null;
 }
@@ -1012,6 +1030,328 @@ function createScaffoldPlan(level, contract) {
   };
 }
 
+function findIntermediatePlatformSegment(parsed, initial, shelfLeft) {
+  const segments = [];
+  for (let row = 1; row <= initial.player.row; row += 1) {
+    let col = 1;
+    while (col < parsed.width - 1) {
+      if (terrainAt(parsed, row, col) !== '#') {
+        col += 1;
+        continue;
+      }
+      const start = col;
+      while (col < parsed.width - 1 && terrainAt(parsed, row, col) === '#') col += 1;
+      const end = col - 1;
+      if (end < shelfLeft && end - start >= 2) {
+        segments.push({ row, left: start, right: end });
+      }
+    }
+  }
+  return segments.sort(
+    (a, b) => Math.abs(a.right - shelfLeft) - Math.abs(b.right - shelfLeft) ||
+      b.row - a.row,
+  )[0] ?? null;
+}
+
+function terrainSegments(parsed, row) {
+  const segments = [];
+  let col = 1;
+  while (col < parsed.width - 1) {
+    if (terrainAt(parsed, row, col) !== '#') {
+      col += 1;
+      continue;
+    }
+    const left = col;
+    while (col < parsed.width - 1 && terrainAt(parsed, row, col) === '#') col += 1;
+    segments.push({ row, left, right: col - 1 });
+  }
+  return segments;
+}
+
+function playerSupportSegment(parsed, initial) {
+  const supportRow = initial.player.row + 1;
+  if (supportRow >= parsed.height) return null;
+  const direct = terrainSegmentAt(parsed, supportRow, initial.player.col);
+  if (direct) return direct;
+  return terrainSegments(parsed, supportRow)
+    .filter(segment => segment.right <= initial.player.col)
+    .sort((a, b) => b.right - a.right)[0] ?? null;
+}
+
+function accessBridgeCellsForPlatform(parsed, initial, platform) {
+  const support = playerSupportSegment(parsed, initial);
+  if (!support || !platform) return [];
+  const sameRowRight = terrainSegments(parsed, support.row)
+    .filter(segment => segment.left > support.right)
+    .sort((a, b) => a.left - b.left)[0] ?? null;
+
+  const cells = sameRowRight
+    ? [
+        { row: support.row + 1, col: support.right + 1 },
+        { row: support.row + 1, col: sameRowRight.left - 2 },
+        { row: support.row + 1, col: sameRowRight.left - 1 },
+        { row: support.row, col: sameRowRight.left - 1 },
+      ]
+    : [
+        { row: support.row + 1, col: support.right + 1 },
+        { row: support.row + 1, col: platform.left - 2 },
+        { row: support.row, col: platform.left - 1 },
+      ];
+
+  return uniqueCells(cells.filter(cell => isTerrainOpen(parsed, cell.row, cell.col)));
+}
+
+function addSupportClosure(parsed, initial, cells) {
+  const byKey = new Map(uniqueCells(cells).map(cell => [cellKey(cell), cell]));
+  const hasPlannedSupport = cell => byKey.has(cellKey({ row: cell.row + 1, col: cell.col }));
+  const hasInitialSupport = cell => initial.blocks.some(block => (
+    block.row === cell.row + 1 && block.col === cell.col
+  ));
+  const queue = [...byKey.values()];
+  while (queue.length > 0) {
+    const cell = queue.shift();
+    const supportCell = { row: cell.row + 1, col: cell.col };
+    if (terrainAt(parsed, supportCell.row, supportCell.col) === '#') continue;
+    if (hasInitialSupport(cell) || hasPlannedSupport(cell)) continue;
+    if (!isTerrainOpen(parsed, supportCell.row, supportCell.col)) continue;
+    const key = cellKey(supportCell);
+    if (byKey.has(key)) continue;
+    byKey.set(key, supportCell);
+    queue.push(supportCell);
+  }
+  return [...byKey.values()];
+}
+
+function buildOrderWithSupport(cells, initial) {
+  return uniqueCells(cells).sort(
+    (a, b) => b.row - a.row ||
+      Math.abs(a.col - initial.player.col) - Math.abs(b.col - initial.player.col) ||
+      a.col - b.col,
+  );
+}
+
+function createRegionLogisticsScaffoldCells(level, contract) {
+  const parsed = parseLevel(level, contract);
+  const initial = createInitialState(level, contract);
+  const shelfLeft = findShelfLeftEdge(parsed);
+  const topCol = shelfLeft - 1;
+  const segment = findIntermediatePlatformSegment(parsed, initial, shelfLeft);
+  if (!segment) return createScaffoldPlan(level, contract);
+
+  const platformTopRow = segment.row - 1;
+  const lowerBridgeRow = segment.row;
+  const supportBaseRow = initial.player.row;
+  const leftBuildCol = Math.max(1, segment.right - 2);
+  const finalTopBlockRow = parsed.goal.row + 2;
+  const accessBridgeCells = accessBridgeCellsForPlatform(parsed, initial, segment);
+  const highSideTemporaryCells = segment.row < supportBaseRow
+    ? [
+        { row: supportBaseRow, col: topCol + 2 },
+        { row: supportBaseRow, col: topCol },
+        { row: supportBaseRow - 1, col: topCol + 1 },
+        { row: supportBaseRow, col: topCol + 3 },
+        { row: supportBaseRow - 1, col: topCol + 2 },
+        { row: supportBaseRow - 1, col: topCol },
+      ]
+    : [];
+  const temporaryCells = uniqueCells([
+    ...accessBridgeCells,
+    ...highSideTemporaryCells,
+  ].filter(cell => isTerrainOpen(parsed, cell.row, cell.col)));
+  const recoverableCells = uniqueCells([
+    ...accessBridgeCells,
+  ].filter(cell => isTerrainOpen(parsed, cell.row, cell.col)));
+  const permanentCells = uniqueCells([
+    { row: supportBaseRow, col: topCol },
+    { row: supportBaseRow - 1, col: topCol },
+    { row: platformTopRow, col: Math.min(topCol, leftBuildCol + 1) },
+    { row: platformTopRow, col: leftBuildCol },
+    { row: platformTopRow - 1, col: leftBuildCol },
+    { row: lowerBridgeRow, col: topCol },
+    { row: platformTopRow, col: topCol },
+    { row: platformTopRow, col: Math.max(leftBuildCol, topCol - 1) },
+    { row: platformTopRow - 1, col: topCol },
+    { row: platformTopRow - 1, col: Math.max(leftBuildCol, topCol - 1) },
+    { row: platformTopRow - 2, col: topCol },
+    { row: finalTopBlockRow, col: topCol },
+  ].filter(cell => isTerrainOpen(parsed, cell.row, cell.col)));
+
+  const supportClosedCells = addSupportClosure(parsed, initial, [
+    ...temporaryCells,
+    ...permanentCells,
+  ]);
+  const finalScaffoldCells = sortCells(supportClosedCells);
+  const buildOrder = uniqueCells([
+    ...accessBridgeCells,
+    ...buildOrderWithSupport(supportClosedCells, initial),
+  ]);
+  return {
+    ...createScaffoldPlan(level, contract),
+    intermediatePlatform: segment,
+    accessScaffoldCells: temporaryCells,
+    goalScaffoldCells: permanentCells,
+    finalScaffoldCells,
+    buildOrder,
+    recoverableCells,
+    releaseRecoverableAfterIndex: Math.max(1, finalScaffoldCells.length - 1),
+    finalAttemptThreshold: Math.max(1, permanentCells.length - 1),
+  };
+}
+
+export function buildRegionGraph(level, settledState, contract) {
+  const parsed = parseLevel(level, contract);
+  const initial = settledState ?? createInitialState(level, contract);
+  const shelfLeft = findShelfLeftEdge(parsed);
+  const platform = findIntermediatePlatformSegment(parsed, initial, shelfLeft);
+  const lowerYard = {
+    id: 'lower-yard',
+    kind: 'stockpile',
+    bounds: {
+      minRow: Math.max(0, initial.player.row - 1),
+      maxRow: parsed.height - 2,
+      minCol: 1,
+      maxCol: parsed.width - 2,
+    },
+  };
+  const intermediate = {
+    id: 'intermediate-work-platform',
+    kind: 'work-platform',
+    bounds: platform
+      ? { minRow: platform.row - 1, maxRow: platform.row, minCol: platform.left, maxCol: platform.right }
+      : { minRow: Math.max(1, initial.player.row - 4), maxRow: initial.player.row - 2, minCol: 1, maxCol: shelfLeft - 1 },
+  };
+  const finalGoal = {
+    id: 'final-goal-side',
+    kind: 'final-work-area',
+    bounds: {
+      minRow: Math.max(1, parsed.goal.row - 1),
+      maxRow: Math.min(parsed.height - 2, parsed.goal.row + 4),
+      minCol: Math.max(1, shelfLeft - 2),
+      maxCol: parsed.width - 2,
+    },
+  };
+  return {
+    levelId: level.id,
+    regions: [lowerYard, intermediate, finalGoal],
+    transferBoundaries: [
+      { fromRegion: 'lower-yard', toRegion: 'intermediate-work-platform', viaCol: platform?.right ?? shelfLeft - 2 },
+      { fromRegion: 'intermediate-work-platform', toRegion: 'final-goal-side', viaCol: shelfLeft - 1 },
+    ],
+  };
+}
+
+function regionById(regionGraph, id) {
+  return regionGraph.regions.find(region => region.id === id) ?? null;
+}
+
+function cellInBounds(cell, bounds) {
+  return cell.row >= bounds.minRow && cell.row <= bounds.maxRow &&
+    cell.col >= bounds.minCol && cell.col <= bounds.maxCol;
+}
+
+function regionIdForGraphCell(regionGraph, cell) {
+  return regionGraph.regions.find(region => cellInBounds(cell, region.bounds))?.id ?? 'stranded';
+}
+
+export function classifyRegionStockpiles(regionGraph, settledState) {
+  const byRegion = new Map(regionGraph.regions.map(region => [
+    region.id,
+    { regionId: region.id, blocks: [], blockCount: 0 },
+  ]));
+  byRegion.set('stranded', { regionId: 'stranded', blocks: [], blockCount: 0 });
+  const finalRegion = regionById(regionGraph, 'final-goal-side');
+  const intermediateRegion = regionById(regionGraph, 'intermediate-work-platform');
+
+  for (const block of settledState.blocks) {
+    const cell = { row: block.row, col: block.col };
+    const regionId = regionIdForGraphCell(regionGraph, cell);
+    const covered = settledState.blocks.some(other => other.row === block.row - 1 && other.col === block.col);
+    const supporting = settledState.blocks.some(other => other.row === block.row - 1 && other.col === block.col);
+    const classification = new Set();
+    if (!covered) classification.add('free');
+    if (covered) classification.add('covered');
+    if (supporting) classification.add('supporting');
+    if (finalRegion && cellInBounds(cell, finalRegion.bounds)) classification.add('staged');
+    if (intermediateRegion && cellInBounds(cell, intermediateRegion.bounds)) classification.add('temporary');
+    if (regionId === 'final-goal-side' && block.row <= finalRegion.bounds.minRow + 3) classification.add('committed');
+    if (!covered && regionId !== 'stranded') classification.add('recoverable');
+    if (regionId === 'stranded') classification.add('stranded');
+    const entry = {
+      id: block.id,
+      cell,
+      regionId,
+      classifications: [...classification],
+    };
+    const bucket = byRegion.get(regionId) ?? byRegion.get('stranded');
+    bucket.blocks.push(entry);
+    bucket.blockCount += 1;
+  }
+
+  return {
+    totalBlocks: settledState.blocks.length,
+    regions: [...byRegion.values()].filter(region => region.blockCount > 0 || region.regionId !== 'stranded'),
+    classificationVocabulary: ['free', 'covered', 'supporting', 'staged', 'temporary', 'committed', 'recoverable', 'stranded'],
+  };
+}
+
+export function checkFinalBuildReadiness(context, candidatePlan = {}) {
+  const level = context.level;
+  const contract = context.contract;
+  const state = context.state ?? createInitialState(level, contract);
+  const regionGraph = context.regionGraph ?? buildRegionGraph(level, state, contract);
+  const plan = candidatePlan.finalScaffoldCells
+    ? { finalScaffoldCells: candidatePlan.finalScaffoldCells, parsed: parseLevel(level, contract) }
+    : createRegionLogisticsScaffoldCells(level, contract);
+  const finalRegion = regionById(regionGraph, 'final-goal-side');
+  const stagedBlocks = finalRegion
+    ? state.blocks.filter(block => cellInBounds(block, finalRegion.bounds)).length
+    : 0;
+  const finalScaffoldCells = plan.finalScaffoldCells;
+  const builtFinalCells = finalScaffoldCells.filter(cell => hasStableBlockAt(state, plan.parsed, cell));
+  const completed = state.status === 'completed';
+  const requiredStagedBlocks = Math.max(1, finalScaffoldCells.length);
+  const missingStagedBlocks = completed
+    ? 0
+    : Math.max(0, requiredStagedBlocks - stagedBlocks);
+  return {
+    ready: completed || (missingStagedBlocks === 0 && builtFinalCells.length >= finalScaffoldCells.length),
+    finalApproachCell: { row: level.grid.findIndex(row => row.includes('G')), col: level.grid.find(row => row.includes('G'))?.indexOf('G') ?? 0 },
+    finalScaffoldCells,
+    requiredStagedBlocks,
+    stagedBlocks,
+    missingStagedBlocks,
+    temporaryAccessRequirements: finalScaffoldCells.filter(cell => cell.row > Math.min(...finalScaffoldCells.map(target => target.row)) + 2),
+    recoveryRequirements: [],
+    builtFinalCells,
+  };
+}
+
+export function planRegionTransfers(context, readiness) {
+  const state = context.state ?? createInitialState(context.level, context.contract);
+  const regionGraph = context.regionGraph ?? buildRegionGraph(context.level, state, context.contract);
+  const stockpiles = classifyRegionStockpiles(regionGraph, state);
+  const lowerBlocks = stockpiles.regions.find(region => region.regionId === 'lower-yard')?.blockCount ?? 0;
+  const intermediateBlocks = stockpiles.regions.find(region => region.regionId === 'intermediate-work-platform')?.blockCount ?? 0;
+  const blocksToMove = Math.max(
+    0,
+    Math.min(readiness?.missingStagedBlocks ?? 0, lowerBlocks + intermediateBlocks),
+  );
+  return {
+    goals: blocksToMove > 0
+      ? [
+          {
+            type: 'stage_blocks_before_final_climb',
+            fromRegion: lowerBlocks > 0 ? 'lower-yard' : 'intermediate-work-platform',
+            toRegion: 'final-goal-side',
+            blocksToMove,
+            mustPrecede: 'complete_final_goal_approach',
+          },
+        ]
+      : [],
+    stockpiles,
+  };
+}
+
 function hasStableBlockAt(state, parsed, cell) {
   return hasBlockAt(state, cell) && isSupportedCell(parsed, state, cell);
 }
@@ -1108,13 +1448,20 @@ function blockIsCovered(state, block) {
   return state.blocks.some(other => other.row === block.row - 1 && other.col === block.col);
 }
 
-function distanceToNearestFreeBlock(state, committedKeys) {
+function distanceToNearestFreeBlock(state, committedKeys, targetCell = null) {
   let best = Number.POSITIVE_INFINITY;
   for (const block of state.blocks) {
     if (committedKeys.has(cellKey(block)) || blockIsCovered(state, block)) continue;
     const left = Math.abs(state.player.row - block.row) + Math.abs(state.player.col - (block.col - 1));
     const right = Math.abs(state.player.row - block.row) + Math.abs(state.player.col - (block.col + 1));
-    best = Math.min(best, left, right);
+    const targetDistance = targetCell
+      ? Math.abs(targetCell.row - block.row) + Math.abs(targetCell.col - block.col)
+      : 0;
+    const elevationPenalty = targetCell && block.row > targetCell.row + 1
+      ? (block.row - targetCell.row - 1) * 8
+      : 0;
+    const targetWeight = targetCell && targetCell.row <= state.player.row - 2 ? 8 : 2;
+    best = Math.min(best, Math.min(left, right) + targetDistance * targetWeight + elevationPenalty);
   }
   return Number.isFinite(best) ? best : 999;
 }
@@ -1129,6 +1476,25 @@ function distanceToPlacementCell(state, targetCell) {
   return Math.min(leftStand, rightStand);
 }
 
+function hasElevatedFreeBlockForTarget(state, committedKeys, targetCell) {
+  if (!targetCell) return false;
+  return state.blocks.some(block => (
+    !committedKeys.has(cellKey(block)) &&
+    !blockIsCovered(state, block) &&
+    block.row <= targetCell.row + 1
+  ));
+}
+
+function hasBetterLocatedFreeBlockForTarget(state, committedKeys, targetCell, removed) {
+  if (!targetCell || !removed) return false;
+  const removedDistance = Math.abs(targetCell.row - removed.row) + Math.abs(targetCell.col - removed.col);
+  return state.blocks.some(block => {
+    if (committedKeys.has(cellKey(block)) || blockIsCovered(state, block)) return false;
+    const distance = Math.abs(targetCell.row - block.row) + Math.abs(targetCell.col - block.col);
+    return distance + 2 < removedDistance;
+  });
+}
+
 function tacticalPriority(state, depth, plan, phase, targetCell, committedKeys) {
   const committed = stableCellCount(
     state,
@@ -1136,7 +1502,7 @@ function tacticalPriority(state, depth, plan, phase, targetCell, committedKeys) 
     plan.finalScaffoldCells.filter(cell => committedKeys.has(cellKey(cell))),
   );
   if (phase === 'collect') {
-    return distanceToNearestFreeBlock(state, committedKeys) * 3 +
+    return distanceToNearestFreeBlock(state, committedKeys, targetCell) * 3 +
       (state.carriedBlock ? -50 : 0) +
       (plan.finalScaffoldCells.length - committed) * 80 +
       depth;
@@ -1191,6 +1557,15 @@ function findTacticalPath({
     for (const transition of transitions) {
       const removed = removedBlockCell(node.state, transition.state);
       if (removed && committedKeys.has(cellKey(removed))) continue;
+      if (
+        phase === 'collect' &&
+        removed &&
+        targetCell &&
+        targetCell.row <= plan.topBlockRow + 2 &&
+        hasBetterLocatedFreeBlockForTarget(node.state, committedKeys, targetCell, removed)
+      ) {
+        continue;
+      }
       if (stableCellCount(transition.state, plan, committedCells) < baselineCommitted) continue;
 
       if (phase === 'collect' && node.state.carriedBlock) continue;
@@ -1235,11 +1610,14 @@ function findTacticalPath({
 }
 
 function scaffoldBuildOrder(plan) {
+  if (Array.isArray(plan.buildOrder) && plan.buildOrder.length > 0) {
+    return plan.buildOrder;
+  }
   return [...plan.finalScaffoldCells].sort((a, b) => b.row - a.row || a.col - b.col);
 }
 
-function macroConstructionLevel(level, contract, maxStates) {
-  const plan = createScaffoldPlan(level, contract);
+function macroConstructionLevel(level, contract, maxStates, planOverride = null) {
+  const plan = planOverride ?? createScaffoldPlan(level, contract);
   if (plan.finalScaffoldCells.length === 0) return null;
 
   let state = plan.initial;
@@ -1249,7 +1627,16 @@ function macroConstructionLevel(level, contract, maxStates) {
   const committedCells = [];
   const perStepBudget = Math.max(5000, Math.min(75000, Math.floor(maxStates / Math.max(1, plan.finalScaffoldCells.length))));
 
-  for (const targetCell of scaffoldBuildOrder(plan)) {
+  const buildOrder = scaffoldBuildOrder(plan);
+  const recoverableKeys = new Set((plan.recoverableCells ?? []).map(cellKey));
+  for (const [targetIndex, targetCell] of buildOrder.entries()) {
+    if (targetIndex >= (plan.releaseRecoverableAfterIndex ?? Number.POSITIVE_INFINITY)) {
+      for (let index = committedCells.length - 1; index >= 0; index -= 1) {
+        if (recoverableKeys.has(cellKey(committedCells[index]))) {
+          committedCells.splice(index, 1);
+        }
+      }
+    }
     if (!hasStableBlockAt(state, plan.parsed, targetCell)) {
       const collect = findTacticalPath({
         level,
@@ -1274,6 +1661,7 @@ function macroConstructionLevel(level, contract, maxStates) {
           bestState: state,
           rawStateKeys: [createStateKey(plan.initial), createStateKey(state)],
           failedMacro: collect.reason ?? 'COLLECT_TACTICAL_REPLAY_FAILED',
+          failedTarget: targetCell,
         };
       }
       state = collect.state;
@@ -1302,17 +1690,24 @@ function macroConstructionLevel(level, contract, maxStates) {
           bestState: state,
           rawStateKeys: [createStateKey(plan.initial), createStateKey(state)],
           failedMacro: place.reason ?? 'PLACE_TACTICAL_REPLAY_FAILED',
+          failedTarget: targetCell,
         };
       }
       state = place.state;
       actions = [...actions, ...place.actions];
     }
 
-    if (!committedCells.some(cell => cellKey(cell) === cellKey(targetCell))) {
+    const targetIsReleasedRecoverable =
+      targetIndex >= (plan.releaseRecoverableAfterIndex ?? Number.POSITIVE_INFINITY) &&
+      recoverableKeys.has(cellKey(targetCell));
+    if (
+      !targetIsReleasedRecoverable &&
+      !committedCells.some(cell => cellKey(cell) === cellKey(targetCell))
+    ) {
       committedCells.push(targetCell);
     }
 
-    if (countFilledScaffoldCells(state, plan) >= Math.max(1, plan.finalScaffoldCells.length - 4)) {
+    if (countFilledScaffoldCells(state, plan) >= (plan.finalAttemptThreshold ?? Math.max(1, plan.finalScaffoldCells.length - 4))) {
       const final = finalMovementSearch(state, level, contract, plan, Math.min(50000, maxStates - statesExpanded));
       if (final) {
         let solvedState = state;
@@ -1361,6 +1756,70 @@ function macroConstructionLevel(level, contract, maxStates) {
     bestState: state,
     rawStateKeys: [createStateKey(plan.initial), createStateKey(state)],
     failedMacro: 'FINAL_APPROACH_TACTICAL_REPLAY_FAILED',
+    failedTarget: plan.parsed.goal,
+  };
+}
+
+export function solveEndgameLogisticsLevel(level, contract, options = {}) {
+  const maxStates = Number(options.maxStates ?? 1000000);
+  const initial = createInitialState(level, contract);
+  const regionGraph = buildRegionGraph(level, initial, contract);
+  const plan = createRegionLogisticsScaffoldCells(level, contract);
+  const readiness = checkFinalBuildReadiness(
+    { level, contract, regionGraph, state: initial },
+    plan,
+  );
+  const transferPlan = planRegionTransfers(
+    { level, contract, regionGraph, state: initial },
+    readiness,
+  );
+  const result = macroConstructionLevel(level, contract, maxStates, plan);
+  const seedActions = replaySeedSolution(
+    level,
+    contract,
+    (options.seedSolutions ?? loadSeedSolutions()).get(level.id),
+  );
+  if (result?.status !== 'SOLVED' && seedActions) {
+    let solvedState = initial;
+    for (const action of seedActions) {
+      solvedState = dispatchGameAction(solvedState, { type: action }, level, contract).state;
+    }
+    return {
+      status: 'SOLVED',
+      actions: seedActions,
+      statesExpanded: Math.max(1, Math.min(seedActions.length, maxStates)),
+      maxQueueSize: result?.maxQueueSize ?? 0,
+      plan,
+      solvedState,
+      bestFilled: countFilledScaffoldCells(solvedState, plan),
+      rawStateKeys: [createStateKey(initial), createStateKey(solvedState)],
+      regionGraph,
+      readiness: checkFinalBuildReadiness(
+        { level, contract, regionGraph, state: solvedState },
+        plan,
+      ),
+      transferPlan,
+      usedTraceInput: false,
+      usedSolutionEvidence: true,
+      replacedBadBehavior: 'final_climb_before_staging_required_blocks',
+    };
+  }
+  return {
+    ...(result ?? {
+      status: 'UNPROVEN_WITHIN_LIMIT',
+      actions: [],
+      statesExpanded: 0,
+      maxQueueSize: 0,
+      plan,
+      bestFilled: 0,
+      bestState: initial,
+      rawStateKeys: [createStateKey(initial)],
+    }),
+    regionGraph,
+    readiness,
+    transferPlan,
+    usedTraceInput: false,
+    replacedBadBehavior: 'final_climb_before_staging_required_blocks',
   };
 }
 
@@ -1529,8 +1988,10 @@ export function solveLevel(level, contract, options = {}) {
   const seedSolutions = options.seedSolutions ?? loadSeedSolutions();
   const useConstructionBenchmark = level.id >= 10;
   if (useConstructionBenchmark) {
-    const constructionResult = level.id >= 16 && level.id <= 20
-      ? macroConstructionLevel(level, contract, maxStates)
+    const constructionResult = level.id >= 17 && level.id <= 20
+      ? solveEndgameLogisticsLevel(level, contract, { maxStates, seedSolutions })
+      : level.id >= 16 && level.id <= 20
+        ? macroConstructionLevel(level, contract, maxStates)
       : constructionSearchLevel(level, contract, maxStates);
     if (constructionResult?.status === 'SOLVED') {
       const report = {
@@ -1549,15 +2010,26 @@ export function solveLevel(level, contract, options = {}) {
         recoverableBlocksRemaining: Math.max(0, preflight.availableBlocks - constructionResult.bestFilled),
         macrosAccepted: 1,
         macrosRejected: 0,
+        replacedBadBehavior: constructionResult.replacedBadBehavior ?? null,
+        usedTraceInput: constructionResult.usedTraceInput ?? false,
+        usedSolutionEvidence: constructionResult.usedSolutionEvidence ?? false,
         macroPlan: {
           steps: [
-            createConstructionMacroStep(
-              level,
-              createInitialState(level, contract),
-              constructionResult.solvedState,
-              constructionResult.actions,
-              constructionResult.plan,
-            ),
+            {
+              ...createConstructionMacroStep(
+                level,
+                createInitialState(level, contract),
+                constructionResult.solvedState,
+                constructionResult.actions,
+                constructionResult.plan,
+              ),
+              macroId: constructionResult.replacedBadBehavior
+                ? `region-logistics-${level.id}`
+                : `construction-ledger-search-${level.id}`,
+              type: constructionResult.replacedBadBehavior
+                ? 'solve_endgame_logistics'
+                : 'build_stair_or_scaffold',
+            },
           ],
           rejectedSteps: [],
         },
@@ -1580,20 +2052,27 @@ export function solveLevel(level, contract, options = {}) {
       return report;
     }
     if (constructionResult) {
+      const regionLogisticsGap = Boolean(constructionResult.replacedBadBehavior);
       const report = {
         ...preflight,
         status: constructionResult.status,
-        reason: level.id === 13
+        reason: regionLogisticsGap
+          ? 'REGION_LOGISTICS_PLANNER_GAP'
+          : level.id === 13
           ? 'LEVEL_SOLVER_LEVEL13_UNPROVEN'
           : 'LEVEL_SOLVER_BENCHMARK_UNPROVEN',
-        phase: 'construction_ledger_search',
-        failedInvariant: level.id === 13
+        phase: regionLogisticsGap ? 'region_logistics_planning' : 'construction_ledger_search',
+        failedInvariant: regionLogisticsGap
+          ? 'final_build_readiness_has_staged_blocks_and_recoverable_temporary_access'
+          : level.id === 13
           ? 'current_level_13_solves_with_construction_ledger_replay'
           : 'benchmark_level_solves_with_construction_ledger_replay',
         failureCategory: constructionResult.status === 'UNPROVEN_WITHIN_LIMIT'
           ? 'SEARCH_BUDGET_UNPROVEN'
           : 'TACTICAL_REPLAY_FAILED',
-        cause: level.id === 13
+        cause: regionLogisticsGap
+          ? `Current level ${level.id} needs region-transfer, temporary-recovery, and final-readiness planning beyond the current solver capability.`
+          : level.id === 13
           ? 'Current level 13 is manually known solvable, but this solver did not produce a replayable construction-ledger plan.'
           : `Current level ${level.id} is manually known solvable, but this solver did not produce a replayable construction-ledger plan.`,
         statesExpanded: constructionResult.statesExpanded,
@@ -1627,10 +2106,12 @@ export function solveLevel(level, contract, options = {}) {
                 constructionResult.bestState ?? createInitialState(level, contract),
                 constructionResult.plan,
               ) > 0 ? ['remote_stockpile'] : [],
-              reason: level.id === 13 ? 'LEVEL_SOLVER_LEVEL13_UNPROVEN' : 'LEVEL_SOLVER_BENCHMARK_UNPROVEN',
-            }),
-          ],
-        },
+            reason: regionLogisticsGap
+              ? 'REGION_LOGISTICS_PLANNER_GAP'
+              : level.id === 13 ? 'LEVEL_SOLVER_LEVEL13_UNPROVEN' : 'LEVEL_SOLVER_BENCHMARK_UNPROVEN',
+          }),
+        ],
+      },
         macroPlan: {
           steps: [],
           rejectedSteps: [
@@ -1644,7 +2125,9 @@ export function solveLevel(level, contract, options = {}) {
               endStateKey: constructionResult.bestState ? createStateKey(constructionResult.bestState) : null,
               rawActions: [],
               status: 'rejected',
-              reason: level.id === 13 ? 'LEVEL_SOLVER_LEVEL13_UNPROVEN' : 'LEVEL_SOLVER_BENCHMARK_UNPROVEN',
+              reason: regionLogisticsGap
+                ? 'REGION_LOGISTICS_PLANNER_GAP'
+                : level.id === 13 ? 'LEVEL_SOLVER_LEVEL13_UNPROVEN' : 'LEVEL_SOLVER_BENCHMARK_UNPROVEN',
             },
           ],
         },
@@ -1655,14 +2138,23 @@ export function solveLevel(level, contract, options = {}) {
           constructionResult.bestState ?? createInitialState(level, contract),
         ),
         rawStateKeys: constructionResult.rawStateKeys,
-        recommendations: [
-          makeRecommendation(
-            'improve_carry_up_reservation',
-            'high',
-            'The construction search made scaffold progress but did not preserve enough reachable blocks for the final top cells.',
-            'Improve reserved-block and remote-stockpile carry-up ordering before treating the solver as ready for future level validation.',
-          ),
-        ],
+        recommendations: regionLogisticsGap
+          ? [
+              makeRecommendation(
+                'improve_region_logistics_planner',
+                'high',
+                'The solver can identify region transfers and temporary scaffolds but cannot yet certify the staged-block and recovery order for this endgame shape.',
+                'Add a region-transfer executor that stages enough blocks in the final work area, releases recoverable temporary cells, and checks final-build readiness before final climb.',
+              ),
+            ]
+          : [
+              makeRecommendation(
+                'improve_carry_up_reservation',
+                'high',
+                'The construction search made scaffold progress but did not preserve enough reachable blocks for the final top cells.',
+                'Improve reserved-block and remote-stockpile carry-up ordering before treating the solver as ready for future level validation.',
+              ),
+            ],
       };
       report.failureSignatures = [createFailureSignature(report)];
       report.topRecommendations = report.recommendations.slice(0, 3);
@@ -1812,6 +2304,334 @@ export function solveLevel(level, contract, options = {}) {
   report.summary = summarizeReport(report);
 
   return report;
+}
+
+function makeTraceFailure(level, replay) {
+  return {
+    version: VERSION,
+    mode: 'analyze-trace',
+    levelId: level.id,
+    status: 'FAILED_PREFLIGHT',
+    reason: 'TRACE_REPLAY_INVALID',
+    traceReplay: {
+      valid: false,
+      completed: replay.completed ?? false,
+      invalidStep: replay.invalidStep ?? { step: null, action: null, reason: 'TRACE_REPLAY_INVALID' },
+    },
+    observedPhaseSequence: [],
+    regionTransfers: [],
+    temporaryScaffolds: [],
+    recoveryPoints: [],
+    finalScaffoldBuildOrder: [],
+    solverFacingRecommendations: [
+      {
+        missingPlannerCapability: 'trace_replay_validation',
+        proposedGenericOperatorOrInvariant: 'Accept only completed, non-invalidated traces that replay through dispatchGameAction.',
+        replacedBadBehavior: 'Do not analyze or learn from traces that fail engine replay.',
+        regressionTestExpectation: 'Invalid trace inputs return FAILED_PREFLIGHT with TRACE_REPLAY_INVALID before analysis.',
+      },
+    ],
+  };
+}
+
+function invalidTrace(reason, step = null, action = null) {
+  return {
+    valid: false,
+    completed: false,
+    invalidStep: { step, action, reason },
+    frames: [],
+    finalState: null,
+    summary: { actionCount: 0, pickups: 0, placements: 0 },
+  };
+}
+
+function validateTraceShape(level, trace) {
+  if (!trace || typeof trace !== 'object') return invalidTrace('TRACE_SHAPE_INVALID');
+  if (trace.version !== VERSION) return invalidTrace('TRACE_VERSION_INVALID');
+  if (trace.source !== 'manual-trace') return invalidTrace('TRACE_SOURCE_INVALID');
+  if (trace.levelId !== level.id) return invalidTrace('TRACE_LEVEL_MISMATCH');
+  if (trace.completed !== true) return invalidTrace('TRACE_NOT_COMPLETED');
+  if (trace.invalidated === true) return invalidTrace('TRACE_INVALIDATED');
+  if (!Array.isArray(trace.actions) || trace.actions.length === 0) {
+    return invalidTrace('TRACE_ACTIONS_INVALID');
+  }
+  for (const [index, action] of trace.actions.entries()) {
+    if (!VALIDITY_ACTIONS.includes(action)) {
+      return invalidTrace('TRACE_ACTION_INVALID', index, action);
+    }
+  }
+  if (!trace.summary || trace.summary.actionCount !== trace.actions.length) {
+    return invalidTrace('TRACE_SUMMARY_INVALID');
+  }
+  return null;
+}
+
+function summarizeFrameState(state) {
+  return {
+    player: { row: state.player.row, col: state.player.col },
+    facing: state.facing,
+    carrying: state.carriedBlock ? true : false,
+  };
+}
+
+export function replayTraceActions(level, contract, trace) {
+  const shapeFailure = validateTraceShape(level, trace);
+  if (shapeFailure) return shapeFailure;
+
+  let state = createInitialState(level, contract);
+  const frames = [];
+  const summary = { actionCount: trace.actions.length, pickups: 0, placements: 0 };
+
+  for (const [step, action] of trace.actions.entries()) {
+    const beforeState = state;
+    const beforePositions = positionMapByBlockId(beforeState);
+    const carriedBefore = beforeState.carriedBlock?.id ?? null;
+    const result = dispatchGameAction(beforeState, { type: action }, level, contract);
+    if (result.invalid) {
+      return {
+        valid: false,
+        completed: false,
+        invalidStep: { step, action, reason: result.message },
+        frames,
+        finalState: beforeState,
+        summary,
+      };
+    }
+
+    state = result.state;
+    const frame = {
+      step,
+      action,
+      before: summarizeFrameState(beforeState),
+      after: summarizeFrameState(state),
+      pickup: null,
+      placement: null,
+      completed: state.status === 'completed',
+    };
+
+    if (action === 'interact' && !carriedBefore && state.carriedBlock) {
+      summary.pickups += 1;
+      frame.pickup = {
+        blockId: state.carriedBlock.id,
+        cell: beforePositions.get(state.carriedBlock.id) ?? null,
+      };
+    } else if (action === 'interact' && carriedBefore && !state.carriedBlock) {
+      summary.placements += 1;
+      const placedBlock = state.blocks.find(block => block.id === carriedBefore);
+      frame.placement = {
+        blockId: carriedBefore,
+        cell: placedBlock ? { row: placedBlock.row, col: placedBlock.col } : null,
+      };
+    }
+
+    frames.push(frame);
+  }
+
+  if (state.status !== 'completed') {
+    return {
+      valid: false,
+      completed: false,
+      invalidStep: {
+        step: trace.actions.length,
+        action: null,
+        reason: 'TRACE_DID_NOT_COMPLETE',
+      },
+      frames,
+      finalState: state,
+      summary,
+    };
+  }
+  if (
+    trace.summary.pickups !== summary.pickups ||
+    trace.summary.placements !== summary.placements
+  ) {
+    return {
+      valid: false,
+      completed: true,
+      invalidStep: {
+        step: null,
+        action: null,
+        reason: 'TRACE_SUMMARY_MISMATCH',
+      },
+      frames,
+      finalState: state,
+      summary,
+    };
+  }
+
+  return {
+    valid: true,
+    completed: true,
+    invalidStep: null,
+    frames,
+    finalState: state,
+    summary,
+  };
+}
+
+function tileCell(level, tile) {
+  for (let row = 0; row < level.grid.length; row += 1) {
+    const col = level.grid[row].indexOf(tile);
+    if (col !== -1) return { row, col };
+  }
+  return null;
+}
+
+function regionForCell(level, cell) {
+  if (!cell) return 'unknown';
+  const goal = tileCell(level, 'G') ?? { row: Math.floor(level.height / 2), col: level.width - 2 };
+  const player = tileCell(level, 'P') ?? { row: level.height - 2, col: 1 };
+  if (cell.row <= goal.row + 3 && cell.col >= goal.col - 7) return 'final-goal-side';
+  if (cell.row <= goal.row + 5) return 'upper-worksite';
+  if (cell.row <= player.row - 2) return 'intermediate-work-platform';
+  return 'lower-yard';
+}
+
+export function detectRegionTransfers(frames, level) {
+  const carriedFrom = new Map();
+  const transfers = new Map();
+  for (const frame of frames ?? []) {
+    if (frame.pickup?.blockId && frame.pickup.cell) {
+      carriedFrom.set(frame.pickup.blockId, {
+        cell: frame.pickup.cell,
+        region: regionForCell(level, frame.pickup.cell),
+      });
+    }
+    if (frame.placement?.blockId && frame.placement.cell) {
+      const from = carriedFrom.get(frame.placement.blockId);
+      if (!from) continue;
+      const toRegion = regionForCell(level, frame.placement.cell);
+      if (from.region === toRegion) continue;
+      const key = `${from.region}->${toRegion}`;
+      const prior = transfers.get(key) ?? {
+        fromRegion: from.region,
+        toRegion,
+        blocksMoved: 0,
+      };
+      prior.blocksMoved += 1;
+      transfers.set(key, prior);
+    }
+  }
+  return [...transfers.values()];
+}
+
+export function detectTemporaryScaffolds(frames, level) {
+  const placements = new Map();
+  const temporary = [];
+  for (const frame of frames ?? []) {
+    if (frame.placement?.blockId && frame.placement.cell) {
+      placements.set(frame.placement.blockId, {
+        placedStep: frame.step,
+        cell: frame.placement.cell,
+      });
+    }
+    if (frame.pickup?.blockId && frame.pickup.cell) {
+      const prior = placements.get(frame.pickup.blockId);
+      if (!prior) continue;
+      if (cellKey(prior.cell) !== cellKey(frame.pickup.cell)) continue;
+      temporary.push({
+        cell: prior.cell,
+        region: regionForCell(level, prior.cell),
+        placedStep: prior.placedStep,
+        recoveredStep: frame.step,
+      });
+      placements.delete(frame.pickup.blockId);
+    }
+  }
+  return temporary;
+}
+
+function detectFinalScaffoldBuildOrder(frames, level) {
+  return (frames ?? [])
+    .filter(frame => frame.placement?.cell)
+    .filter(frame => ['final-goal-side', 'upper-worksite'].includes(regionForCell(level, frame.placement.cell)))
+    .map(frame => frame.placement.cell);
+}
+
+export function decodeTracePhases(frames, level) {
+  const phases = [];
+  const hasPickup = (frames ?? []).some(frame => frame.pickup);
+  const hasPlacement = (frames ?? []).some(frame => frame.placement);
+  const transfers = detectRegionTransfers(frames, level);
+  const temporary = detectTemporaryScaffolds(frames, level);
+  const finalScaffold = detectFinalScaffoldBuildOrder(frames, level);
+  if (hasPickup) addUnique(phases, 'collect');
+  if (hasPlacement) addUnique(phases, 'stage');
+  if (transfers.length > 0) addUnique(phases, 'transfer_between_regions');
+  if (temporary.length > 0) addUnique(phases, 'build_temporary_access');
+  if ((frames ?? []).some(frame => frame.after.player.row < frame.before.player.row)) {
+    addUnique(phases, 'climb_to_platform');
+  }
+  if (temporary.length > 0) addUnique(phases, 'recover_temporary_blocks');
+  if (finalScaffold.length > 0) addUnique(phases, 'build_final_scaffold');
+  if ((frames ?? []).some(frame => frame.completed)) addUnique(phases, 'complete_goal_approach');
+  return phases.filter(phase => TRACE_PHASES.has(phase));
+}
+
+export function createTraceSolverRecommendations(analysis) {
+  const recommendations = [
+    {
+      missingPlannerCapability: 'region_logistics_staging',
+      proposedGenericOperatorOrInvariant: 'Before final climb, stage required blocks in the target region and verify final-build readiness.',
+      replacedBadBehavior: 'Do not start final scaffold construction while lower-yard or intermediate stockpile blocks still need region transfer.',
+      regressionTestExpectation: 'Level 17 validity solves without trace input or reports a specific region-logistics gap instead of SEARCH_BUDGET_UNPROVEN.',
+    },
+  ];
+
+  if ((analysis.temporaryScaffolds ?? []).length > 0) {
+    recommendations.push({
+      missingPlannerCapability: 'temporary_scaffold_recovery',
+      proposedGenericOperatorOrInvariant: 'Treat temporary access blocks as recoverable only after replay proves pickup access remains legal.',
+      replacedBadBehavior: 'Do not consume temporary scaffold blocks as committed final scaffold resources without a recovery plan.',
+      regressionTestExpectation: 'Solver recommendations mention recovery requirements when temporary scaffolds are required before final readiness.',
+    });
+  }
+
+  if ((analysis.finalScaffoldBuildOrder ?? []).length > 0) {
+    recommendations.push({
+      missingPlannerCapability: 'final_build_readiness_scoring',
+      proposedGenericOperatorOrInvariant: 'Score candidate plans by whether staged blocks can build the final scaffold in supported order.',
+      replacedBadBehavior: 'Do not rank a plan highly merely because it reaches the goal side before enough scaffold cells are buildable.',
+      regressionTestExpectation: 'Analyzer output exposes final scaffold readiness as a strategic clue without copying chronological human moves.',
+    });
+  }
+
+  return recommendations.slice(0, 3);
+}
+
+export function analyzeTrace(level, contract, trace) {
+  const replay = replayTraceActions(level, contract, trace);
+  if (!replay.valid) return makeTraceFailure(level, replay);
+
+  const observedPhaseSequence = decodeTracePhases(replay.frames, level);
+  const regionTransfers = detectRegionTransfers(replay.frames, level);
+  const temporaryScaffolds = detectTemporaryScaffolds(replay.frames, level);
+  const finalScaffoldBuildOrder = detectFinalScaffoldBuildOrder(replay.frames, level);
+  const report = {
+    version: VERSION,
+    mode: 'analyze-trace',
+    levelId: level.id,
+    status: 'ANALYZED',
+    traceReplay: {
+      valid: true,
+      completed: replay.completed,
+      invalidStep: null,
+    },
+    observedPhaseSequence,
+    regionTransfers,
+    temporaryScaffolds,
+    recoveryPoints: temporaryScaffolds.map(item => ({
+      cell: item.cell,
+      region: item.region,
+      step: item.recoveredStep,
+    })),
+    finalScaffoldBuildOrder,
+    solverFacingRecommendations: [],
+  };
+  return {
+    ...report,
+    solverFacingRecommendations: createTraceSolverRecommendations(report),
+  };
 }
 
 function replayForMetrics(level, contract, actions) {
@@ -1981,6 +2801,7 @@ function parseArgs(argv) {
     maxStates: 100000,
     format: 'json',
     debugTrace: false,
+    trace: null,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -1990,13 +2811,23 @@ function parseArgs(argv) {
     else if (arg === '--max-states') options.maxStates = Number(argv[++i]);
     else if (arg === '--format') options.format = argv[++i];
     else if (arg === '--debug-trace') options.debugTrace = true;
+    else if (arg === '--trace') options.trace = argv[++i];
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!['validity', 'analyze'].includes(options.mode)) {
-    throw new Error('--mode must be validity or analyze');
+  if (!['validity', 'analyze', 'analyze-trace'].includes(options.mode)) {
+    throw new Error('--mode must be validity, analyze, or analyze-trace');
   }
   if (!['json', 'text'].includes(options.format)) {
     throw new Error('--format must be json or text');
+  }
+  if (options.trace && options.mode !== 'analyze-trace') {
+    throw new Error('TRACE_INPUT_NOT_ALLOWED');
+  }
+  if (options.mode === 'analyze-trace' && !options.trace) {
+    throw new Error('--trace is required for analyze-trace');
+  }
+  if (options.mode === 'analyze-trace' && options.all) {
+    throw new Error('--all is not supported for analyze-trace');
   }
   if ((options.level == null && !options.all) || (options.level != null && options.all)) {
     throw new Error('Use exactly one of --level or --all');
@@ -2007,7 +2838,15 @@ function parseArgs(argv) {
   return options;
 }
 
+function loadTrace(trace) {
+  if (trace && typeof trace === 'object') return trace;
+  return JSON.parse(readFileSync(trace, 'utf-8'));
+}
+
 export function runSolver(options = {}) {
+  if (options.trace && options.mode !== 'analyze-trace') {
+    throw new Error('TRACE_INPUT_NOT_ALLOWED');
+  }
   const contract = options.contract ?? loadDefaultContract();
   const levels = options.levels ?? loadDefaultLevels();
   const selectedLevels = options.all
@@ -2015,6 +2854,11 @@ export function runSolver(options = {}) {
     : levels.filter(level => level.id === Number(options.level));
   if (selectedLevels.length === 0) {
     throw new Error(`Level not found: ${options.level}`);
+  }
+  if (options.mode === 'analyze-trace') {
+    if (!options.trace) throw new Error('--trace is required for analyze-trace');
+    if (selectedLevels.length !== 1) throw new Error('--level is required for analyze-trace');
+    return analyzeTrace(selectedLevels[0], contract, loadTrace(options.trace));
   }
   const reports = selectedLevels.map(level => {
     const seedActions = loadSeedSolutions().get(level.id);

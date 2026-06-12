@@ -17,6 +17,9 @@ from backend.app.schemas import LevelDefinition, LevelValidationError
 
 LEVELS_PATH = Path("backend/app/data/levels.json")
 CANDIDATE_LEVELS_PATH = Path("docs/intake/candidate_levels_6_20.json")
+REBUILT_LEVELS_PATH = Path("docs/intake/block_builder_levels_20_30_rebuilt.json")
+HARDMODE_LEVELS_PATH = Path("docs/intake/block_builder_levels_31_40_hardmode.json")
+REVERSE_LEVELS_PATH = Path("docs/intake/block_builder_levels_41_50_reverse_designed.json")
 RESOURCE_REQUIREMENTS_PATH = Path("tests/fixtures/level_resource_requirements.json")
 CONTRACT_PATH = Path("shared/app_contract.json")
 
@@ -37,7 +40,7 @@ def _mutated(tmp_path: Path, mutate_fn) -> Path:
 
 def test_plan_level_file_is_valid():
     levels = load_levels(LEVELS_PATH)
-    assert [lv.id for lv in levels] == list(range(1, 21))
+    assert [lv.id for lv in levels] == list(range(1, 51))
     assert all(isinstance(lv, LevelDefinition) for lv in levels)
 
 
@@ -49,6 +52,30 @@ def test_level_20_matches_expansion_contract():
     assert lv.height == 17
 
 
+def test_level_30_matches_expansion_contract():
+    levels = load_levels(LEVELS_PATH)
+    lv = get_level(levels, 30)
+    assert lv.title == "Two Quarries, One Crossing"
+    assert lv.width == 26
+    assert lv.height == 14
+
+
+def test_level_40_matches_playtest_import_contract():
+    levels = load_levels(LEVELS_PATH)
+    lv = get_level(levels, 40)
+    assert lv.title == "Grand Commitment Yard"
+    assert lv.width == 38
+    assert lv.height == 22
+
+
+def test_level_50_matches_playtest_import_contract():
+    levels = load_levels(LEVELS_PATH)
+    lv = get_level(levels, 50)
+    assert lv.title == "Cathedral Scaffold"
+    assert lv.width == 50
+    assert lv.height == 23
+
+
 def test_candidate_source_validates_ids_6_through_20():
     raw = json.loads(CANDIDATE_LEVELS_PATH.read_text())
     contract = load_contract(CONTRACT_PATH)
@@ -58,19 +85,56 @@ def test_candidate_source_validates_ids_6_through_20():
     assert [lv.id for lv in levels] == list(range(6, 21))
 
 
-def test_resource_analysis_reports_levels_6_through_20():
+def test_rebuilt_candidate_source_validates_ids_20_through_30():
+    raw = json.loads(REBUILT_LEVELS_PATH.read_text())
+    contract = load_contract(CONTRACT_PATH)
+
+    levels = level_service.validate_candidate_levels(raw, contract, list(range(20, 31)))
+
+    assert [lv.id for lv in levels] == list(range(20, 31))
+
+
+def test_hardmode_candidate_source_validates_ids_31_through_40():
+    raw = json.loads(HARDMODE_LEVELS_PATH.read_text())
+    contract = load_contract(CONTRACT_PATH)
+
+    levels = level_service.validate_candidate_levels(raw, contract, list(range(31, 41)))
+
+    assert [lv.id for lv in levels] == list(range(31, 41))
+
+
+def test_reverse_candidate_source_validates_ids_41_through_50():
+    raw = json.loads(REVERSE_LEVELS_PATH.read_text())
+    contract = load_contract(CONTRACT_PATH)
+
+    levels = level_service.validate_candidate_levels(raw, contract, list(range(41, 51)))
+
+    assert [lv.id for lv in levels] == list(range(41, 51))
+
+
+def test_resource_analysis_reports_levels_6_through_30():
     levels = load_levels(LEVELS_PATH)
     manifest = json.loads(RESOURCE_REQUIREMENTS_PATH.read_text())
 
     reports = level_service.analyze_level_resources(levels, manifest)
 
-    assert [report["levelId"] for report in reports] == list(range(6, 21))
+    assert [report["levelId"] for report in reports] == list(range(6, 31))
     assert all(report["surplusBlocks"] >= 0 for report in reports)
 
     level_13 = next(report for report in reports if report["levelId"] == 13)
     assert level_13["availableBlocks"] == 15
     assert level_13["requiredBlocks"] == 12
     assert level_13["surplusBlocks"] == 3
+
+    level_21 = next(report for report in reports if report["levelId"] == 21)
+    assert level_21["availableBlocks"] == 3
+    assert level_21["requiredBlocks"] == 3
+    assert level_21["surplusBlocks"] == 0
+
+    level_30 = next(report for report in reports if report["levelId"] == 30)
+    assert level_30["availableBlocks"] == 6
+    assert level_30["requiredBlocks"] == 4
+    assert level_30["surplusBlocks"] == 2
 
 
 def test_resource_analysis_rejects_deficit():

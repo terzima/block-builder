@@ -1,12 +1,12 @@
 # Repo Map
 
-Status: PLAN-0004 ready for implementation after CR-0010 solver hardening
+Status: PLAN-0005 implemented locally; A2 levels 21-30 product review pending
 Maturity: M3
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Purpose
 
-This repository currently contains the controlled documentation and agent-governance scaffold for a deterministic grid block puzzle game. Application structure is planned but not implemented yet.
+This repository contains a local deterministic grid block puzzle game with a FastAPI backend, vanilla JavaScript frontend, shared contract, level validation tooling, replay fixtures, and controlled planning docs.
 
 ## Current top-level structure
 
@@ -106,12 +106,14 @@ python3 -m py_compile scripts/agent/*.py .codex/hooks/*.py
 python3 -m json.tool shared/app_contract.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
 python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
+python3 -m json.tool docs/intake/block_builder_levels_20_30_rebuilt.json >/dev/null
 python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
 python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null
 .venv/bin/python tools/validate_levels.py
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json
 .venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
-.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
 node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
 node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
@@ -119,6 +121,16 @@ node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
 node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
+node tools/solve-levels.mjs --mode validity --level 21 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 22 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 23 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 24 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 25 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 26 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 27 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 28 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 29 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 30 --max-states 1000000
 node tests/js/run-tests.mjs
 ```
 
@@ -133,6 +145,7 @@ A3 dependency/network approval is required before running install commands.
 # Validate level data:
 .venv/bin/python tools/validate_levels.py
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json
 .venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
 
 # Run backend tests:

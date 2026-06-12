@@ -1,6 +1,6 @@
 # PLAN-0004: Level Expansion Pipeline
 
-Status: Ready for Implementation
+Status: Completed
 Approval Class: A2
 Maturity: M4
 Owner: Unassigned
@@ -11,6 +11,8 @@ Related ADRs: `docs/adr/ADR-0000-architecture-direction.md`
 Related Change Requests: `docs/change-requests/CR-0004-level-1-support-geometry-fix.md`, `docs/change-requests/CR-0005-solution-evidence-capture.md`, `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md`, `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md`, `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md`, `docs/change-requests/CR-0009-physics-certified-macro-solver.md`, `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md`, `docs/change-requests/CR-0011-trace-informed-endgame-solver-reset.md`
 
 **Goal:** Expand the local canonical game from 5 levels to 20 levels using the accepted SPEC-0004 candidate source, with validator-backed data, stack-stable pickup physics, deterministic block-resource reporting, an engine-backed canonical state-space solver guided by construction-ledger and region-logistics planning, trace capture and trace macro analysis for development evidence, layered design-facing solver reporting, engine-replayed solution evidence, and variable-board rendering support.
+
+**Completion note:** Closed by owner override on 2026-06-12 with level 20 replay evidence marked as `UNPROVEN_REPLAY_EVIDENCE` in `tests/fixtures/level_solutions.json`. Levels 1-19 have replay-certified solution evidence; level 20 is intentionally recorded as a failed/unproven replay-evidence case so PLAN-0005 can proceed without more solver time.
 
 **Architecture:** Keep backend responsibilities limited to JSON loading, validation, static serving, and API responses. Keep gameplay state and solution replay in the existing vanilla JavaScript engine. Treat `docs/intake/candidate_levels_6_20.json` as planning/import source only; canonical runtime data remains `backend/app/data/levels.json`.
 

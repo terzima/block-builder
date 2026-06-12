@@ -13,7 +13,8 @@
     { "levelId": 10, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true },
     { "levelId": 13, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "minActions": 1, "maxActions": 1000, "requiresConstructionLedger": true, "requiresMacroPlan": true, "requiresReplay": true, "requiresCarryUpReservation": true },
     { "levelId": 14, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true },
-    { "levelId": 16, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true }
+    { "levelId": 16, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true },
+    { "levelId": 17, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresRegionLogistics": true, "requiresReplay": true }
   ],
   "currentLevel13": {
     "levelId": 13,
@@ -40,5 +41,29 @@
   },
   "repeatedBadPlanFixture": {
     "minPrunedSimilarFailures": 1
+  },
+  "traceAnalyzer": {
+    "levelId": 17,
+    "fixture": "tests/fixtures/manual_traces/level_17_trace.json",
+    "expectedStatus": "ANALYZED",
+    "expectedReplayReason": "TRACE_REPLAY_INVALID",
+    "requiredRecommendationFields": [
+      "missingPlannerCapability",
+      "proposedGenericOperatorOrInvariant",
+      "replacedBadBehavior",
+      "regressionTestExpectation"
+    ],
+    "strategicTerms": [
+      "region",
+      "readiness",
+      "scaffold",
+      "recovery",
+      "final"
+    ]
+  },
+  "regionLogistics": {
+    "requiredRegions": ["lower-yard", "intermediate-work-platform", "final-goal-side"],
+    "requiredBlockClassifications": ["free", "covered", "supporting", "staged", "temporary", "committed", "recoverable", "stranded"],
+    "replacedBadBehavior": "final_climb_before_staging_required_blocks"
   }
 }

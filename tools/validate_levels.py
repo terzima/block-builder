@@ -4,6 +4,9 @@
 Usage:
     python tools/validate_levels.py [path]
     python tools/validate_levels.py [path] --candidate-source docs/intake/candidate_levels_6_20.json
+    python tools/validate_levels.py [path] --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json
+    python tools/validate_levels.py [path] --candidate-source docs/intake/block_builder_levels_31_40_hardmode.json
+    python tools/validate_levels.py [path] --candidate-source docs/intake/block_builder_levels_41_50_reverse_designed.json
     python tools/validate_levels.py [path] --resource-source tests/fixtures/level_resource_requirements.json
 
 Defaults to backend/app/data/levels.json when no path is given.
@@ -44,7 +47,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--candidate-source",
         type=Path,
-        help="candidate level source to validate as levels 6-20",
+        help=(
+            "candidate level source to validate as levels 6-20, 20-30, "
+            "31-40, or 41-50"
+        ),
     )
     parser.add_argument(
         "--resource-source",
@@ -88,6 +94,37 @@ def _load_resource_source(path: Path):
         )
 
 
+def _candidate_expected_ids(raw_candidates) -> list[int]:
+    if not isinstance(raw_candidates, list):
+        raise LevelValidationError(
+            "LEVELS_ROOT_INVALID",
+            "Candidate levels must be a JSON array.",
+        )
+    try:
+        ids = [candidate["id"] for candidate in raw_candidates]
+    except (TypeError, KeyError):
+        raise LevelValidationError(
+            "LEVEL_ID_SEQUENCE_INVALID",
+            "Every candidate level must include id.",
+        )
+    if ids == list(range(6, 21)):
+        return ids
+    if ids == list(range(20, 31)):
+        return ids
+    if ids == list(range(31, 41)):
+        return ids
+    if ids == list(range(41, 51)):
+        return ids
+    raise LevelValidationError(
+        "LEVEL_ID_SEQUENCE_INVALID",
+        (
+            "Candidate level IDs must be exactly 6-20, 20-30, 31-40, "
+            "or 41-50 in order."
+        ),
+        {"got": ids},
+    )
+
+
 def main() -> int:
     args = _parse_args()
     try:
@@ -97,7 +134,11 @@ def main() -> int:
             settings = get_settings()
             contract = load_contract(settings.shared_contract_path)
             raw_candidates = _load_candidate_source(args.candidate_source)
-            candidates = validate_candidate_levels(raw_candidates, contract)
+            candidates = validate_candidate_levels(
+                raw_candidates,
+                contract,
+                expected_ids=_candidate_expected_ids(raw_candidates),
+            )
             print(
                 f"Validated {len(candidates)} candidate levels from "
                 f"{args.candidate_source}"

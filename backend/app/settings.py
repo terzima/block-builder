@@ -19,7 +19,7 @@ class Settings:
     levels_path: Path = field(default_factory=Path)
     progress_path: Path = field(default_factory=Path)
     cors_allowed_origins: tuple[str, ...] = ()
-    trusted_hosts: tuple[str, ...] = ("127.0.0.1", "localhost")
+    trusted_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "10.0.0.117")
     enable_progress_api: bool = False
 
 
@@ -55,7 +55,7 @@ def get_settings(env: Mapping[str, str] | None = None) -> Settings:
     if trusted_hosts_raw:
         trusted_hosts = tuple(item.strip() for item in trusted_hosts_raw.split(",") if item.strip())
     else:
-        trusted_hosts = ("127.0.0.1", "localhost")
+        trusted_hosts = ("127.0.0.1", "localhost", "10.0.0.117")
 
     _truthy = {"1", "true", "yes"}
     enable_progress_api = env.get("ENABLE_PROGRESS_API", "").lower() in _truthy

@@ -4,114 +4,411 @@
     {
       "levelId": 6,
       "segments": [
-        { "name": "ground-to-shelf", "fromRow": 7, "toRow": 5 },
-        { "name": "shelf-to-goal", "fromRow": 5, "toRow": 4 }
+        {
+          "name": "ground-to-shelf",
+          "fromRow": 7,
+          "toRow": 5
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 5,
+          "toRow": 4
+        }
       ]
     },
     {
       "levelId": 7,
       "segments": [
-        { "name": "lower-yard-to-shelf", "fromRow": 8, "toRow": 6 },
-        { "name": "shelf-to-goal", "fromRow": 6, "toRow": 5 }
+        {
+          "name": "lower-yard-to-shelf",
+          "fromRow": 8,
+          "toRow": 6
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 6,
+          "toRow": 5
+        }
       ]
     },
     {
       "levelId": 8,
       "segments": [
-        { "name": "basin-to-yard", "fromRow": 9, "toRow": 7 },
-        { "name": "yard-to-goal-shelf", "fromRow": 7, "toRow": 5 }
+        {
+          "name": "basin-to-yard",
+          "fromRow": 9,
+          "toRow": 7
+        },
+        {
+          "name": "yard-to-goal-shelf",
+          "fromRow": 7,
+          "toRow": 5
+        }
       ]
     },
     {
       "levelId": 9,
       "segments": [
-        { "name": "pit-to-yard", "fromRow": 9, "toRow": 7 },
-        { "name": "yard-to-shelf", "fromRow": 7, "toRow": 5 },
-        { "name": "shelf-to-goal", "fromRow": 5, "toRow": 4 }
+        {
+          "name": "pit-to-yard",
+          "fromRow": 9,
+          "toRow": 7
+        },
+        {
+          "name": "yard-to-shelf",
+          "fromRow": 7,
+          "toRow": 5
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 5,
+          "toRow": 4
+        }
       ]
     },
     {
       "levelId": 10,
       "segments": [
-        { "name": "stockpile-to-workbench", "fromRow": 10, "toRow": 8 },
-        { "name": "workbench-to-goal", "fromRow": 8, "toRow": 6 }
+        {
+          "name": "stockpile-to-workbench",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "workbench-to-goal",
+          "fromRow": 8,
+          "toRow": 6
+        }
       ]
     },
     {
       "levelId": 11,
       "segments": [
-        { "name": "lower-cache-to-yard", "fromRow": 10, "toRow": 8 },
-        { "name": "yard-to-shelf", "fromRow": 8, "toRow": 6 },
-        { "name": "shelf-to-goal", "fromRow": 6, "toRow": 5 }
+        {
+          "name": "lower-cache-to-yard",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "yard-to-shelf",
+          "fromRow": 8,
+          "toRow": 6
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 6,
+          "toRow": 5
+        }
       ]
     },
     {
       "levelId": 12,
       "segments": [
-        { "name": "ground-to-workbench", "fromRow": 11, "toRow": 9 },
-        { "name": "workbench-to-shelf", "fromRow": 9, "toRow": 7 },
-        { "name": "shelf-to-goal", "fromRow": 7, "toRow": 6 }
+        {
+          "name": "ground-to-workbench",
+          "fromRow": 11,
+          "toRow": 9
+        },
+        {
+          "name": "workbench-to-shelf",
+          "fromRow": 9,
+          "toRow": 7
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 7,
+          "toRow": 6
+        }
       ]
     },
     {
       "levelId": 13,
       "segments": [
-        { "name": "ground-to-workbench", "fromRow": 12, "toRow": 9 },
-        { "name": "workbench-to-goal", "fromRow": 9, "toRow": 6 }
+        {
+          "name": "ground-to-workbench",
+          "fromRow": 12,
+          "toRow": 9
+        },
+        {
+          "name": "workbench-to-goal",
+          "fromRow": 9,
+          "toRow": 6
+        }
       ]
     },
     {
       "levelId": 14,
       "segments": [
-        { "name": "ground-to-goal-shelf", "fromRow": 12, "toRow": 8 }
+        {
+          "name": "ground-to-goal-shelf",
+          "fromRow": 12,
+          "toRow": 8
+        }
       ]
     },
     {
       "levelId": 15,
       "segments": [
-        { "name": "crater-to-yard", "fromRow": 12, "toRow": 10 },
-        { "name": "yard-to-goal-shelf", "fromRow": 10, "toRow": 7 }
+        {
+          "name": "crater-to-yard",
+          "fromRow": 12,
+          "toRow": 10
+        },
+        {
+          "name": "yard-to-goal-shelf",
+          "fromRow": 10,
+          "toRow": 7
+        }
       ]
     },
     {
       "levelId": 16,
       "segments": [
-        { "name": "ground-to-worksite", "fromRow": 13, "toRow": 11 },
-        { "name": "worksite-to-goal-shelf", "fromRow": 11, "toRow": 8 }
+        {
+          "name": "ground-to-worksite",
+          "fromRow": 13,
+          "toRow": 11
+        },
+        {
+          "name": "worksite-to-goal-shelf",
+          "fromRow": 11,
+          "toRow": 8
+        }
       ]
     },
     {
       "levelId": 17,
       "segments": [
-        { "name": "ground-to-worksite", "fromRow": 13, "toRow": 11 },
-        { "name": "worksite-to-shelf", "fromRow": 11, "toRow": 8 },
-        { "name": "shelf-to-goal", "fromRow": 8, "toRow": 7 }
+        {
+          "name": "ground-to-worksite",
+          "fromRow": 13,
+          "toRow": 11
+        },
+        {
+          "name": "worksite-to-shelf",
+          "fromRow": 11,
+          "toRow": 8
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
       ]
     },
     {
       "levelId": 18,
       "segments": [
-        { "name": "lower-cache-to-yard", "fromRow": 15, "toRow": 13 },
-        { "name": "yard-to-workbench", "fromRow": 13, "toRow": 11 },
-        { "name": "workbench-to-shelf", "fromRow": 11, "toRow": 8 },
-        { "name": "shelf-to-goal", "fromRow": 8, "toRow": 7 }
+        {
+          "name": "lower-cache-to-yard",
+          "fromRow": 15,
+          "toRow": 13
+        },
+        {
+          "name": "yard-to-workbench",
+          "fromRow": 13,
+          "toRow": 11
+        },
+        {
+          "name": "workbench-to-shelf",
+          "fromRow": 11,
+          "toRow": 8
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
       ]
     },
     {
       "levelId": 19,
       "segments": [
-        { "name": "lower-yard-to-workbench", "fromRow": 14, "toRow": 12 },
-        { "name": "workbench-to-shelf", "fromRow": 12, "toRow": 9 },
-        { "name": "shelf-to-goal", "fromRow": 9, "toRow": 8 }
+        {
+          "name": "lower-yard-to-workbench",
+          "fromRow": 14,
+          "toRow": 12
+        },
+        {
+          "name": "workbench-to-shelf",
+          "fromRow": 12,
+          "toRow": 9
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 9,
+          "toRow": 8
+        }
       ]
     },
     {
       "levelId": 20,
       "segments": [
-        { "name": "ground-to-workbench", "fromRow": 15, "toRow": 13 },
-        { "name": "workbench-to-upper-yard", "fromRow": 13, "toRow": 10 },
-        { "name": "upper-yard-to-shelf", "fromRow": 10, "toRow": 8 },
-        { "name": "shelf-to-goal", "fromRow": 8, "toRow": 7 }
+        {
+          "name": "ground-to-workbench",
+          "fromRow": 15,
+          "toRow": 13
+        },
+        {
+          "name": "workbench-to-upper-yard",
+          "fromRow": 13,
+          "toRow": 10
+        },
+        {
+          "name": "upper-yard-to-shelf",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
+      ]
+    },
+    {
+      "levelId": 21,
+      "segments": [
+        {
+          "name": "ground-to-first-step",
+          "fromRow": 8,
+          "toRow": 6
+        }
+      ]
+    },
+    {
+      "levelId": 22,
+      "segments": [
+        {
+          "name": "pit-to-exit-shelf",
+          "fromRow": 8,
+          "toRow": 6
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 6,
+          "toRow": 5
+        }
+      ]
+    },
+    {
+      "levelId": 23,
+      "segments": [
+        {
+          "name": "lower-base-to-higher-base",
+          "fromRow": 9,
+          "toRow": 7
+        },
+        {
+          "name": "higher-base-to-goal",
+          "fromRow": 7,
+          "toRow": 6
+        }
+      ]
+    },
+    {
+      "levelId": 24,
+      "segments": [
+        {
+          "name": "lower-yard-to-shelf",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
+      ]
+    },
+    {
+      "levelId": 25,
+      "segments": [
+        {
+          "name": "quarry-to-exit-shelf",
+          "fromRow": 8,
+          "toRow": 6
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 6,
+          "toRow": 5
+        }
+      ]
+    },
+    {
+      "levelId": 26,
+      "segments": [
+        {
+          "name": "ground-to-exit-platform",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "platform-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
+      ]
+    },
+    {
+      "levelId": 27,
+      "segments": [
+        {
+          "name": "lower-yard-to-worksite",
+          "fromRow": 12,
+          "toRow": 10
+        },
+        {
+          "name": "worksite-to-goal-shelf",
+          "fromRow": 10,
+          "toRow": 9
+        }
+      ]
+    },
+    {
+      "levelId": 28,
+      "segments": [
+        {
+          "name": "basin-to-exit-platform",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "platform-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
+      ]
+    },
+    {
+      "levelId": 29,
+      "segments": [
+        {
+          "name": "lower-yard-to-shelf",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "shelf-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
+      ]
+    },
+    {
+      "levelId": 30,
+      "segments": [
+        {
+          "name": "lower-yard-to-quarries",
+          "fromRow": 10,
+          "toRow": 8
+        },
+        {
+          "name": "quarries-to-goal",
+          "fromRow": 8,
+          "toRow": 7
+        }
       ]
     }
   ]

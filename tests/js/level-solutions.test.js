@@ -29,11 +29,42 @@ export function run() {
   assert.ok(Array.isArray(SOLUTIONS.solutions), 'solutions: array');
 
   const expectedIds = LEVELS.map(level => level.id);
+  const knownFailures = Array.isArray(SOLUTIONS.knownFailures)
+    ? SOLUTIONS.knownFailures
+    : [];
+  const knownFailureIds = new Set();
+  for (const failure of knownFailures) {
+    assert.equal(typeof failure.levelId, 'number', 'known failure: levelId number');
+    assert.equal(
+      expectedIds.includes(failure.levelId),
+      true,
+      `known failure ${failure.levelId}: canonical level exists`,
+    );
+    assert.equal(
+      knownFailureIds.has(failure.levelId),
+      false,
+      `known failure: duplicate ${failure.levelId}`,
+    );
+    assert.equal(
+      failure.status,
+      'UNPROVEN_REPLAY_EVIDENCE',
+      `known failure ${failure.levelId}: status`,
+    );
+    assert.equal(typeof failure.note, 'string', `known failure ${failure.levelId}: note`);
+    assert.notEqual(failure.note.trim(), '', `known failure ${failure.levelId}: non-empty note`);
+    knownFailureIds.add(failure.levelId);
+  }
+  const expectedSolutionIds = expectedIds.filter(id => !knownFailureIds.has(id));
   const seenIds = new Set();
   const byId = new Map();
 
   for (const solution of SOLUTIONS.solutions) {
     assert.equal(typeof solution.levelId, 'number', 'solutions: levelId number');
+    assert.equal(
+      knownFailureIds.has(solution.levelId),
+      false,
+      `level ${solution.levelId}: cannot be both solution and known failure`,
+    );
     assert.equal(seenIds.has(solution.levelId), false, `solutions: duplicate ${solution.levelId}`);
     seenIds.add(solution.levelId);
     byId.set(solution.levelId, solution);
@@ -51,11 +82,12 @@ export function run() {
 
   assert.deepEqual(
     [...seenIds].sort((a, b) => a - b),
-    expectedIds,
+    expectedSolutionIds,
     'solutions: exact level coverage',
   );
 
   for (const level of LEVELS) {
+    if (knownFailureIds.has(level.id)) continue;
     const solution = byId.get(level.id);
     let state = createInitialState(level, CONTRACT);
     for (const [step, action] of solution.actions.entries()) {
