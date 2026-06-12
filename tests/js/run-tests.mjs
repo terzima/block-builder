@@ -6,6 +6,7 @@
 
 import { run as runPhysics } from './physics.test.js';
 import { run as runEngine } from './engine.test.js';
+import { run as runStaticRelease } from './static-release.test.js';
 import { run as runTraceRecorder } from './trace-recorder.test.js';
 import { run as runSolver } from './solver.test.js';
 import { run as runLevelSolutions } from './level-solutions.test.js';
@@ -23,6 +24,14 @@ try {
   console.log('ok engine');
 } catch (err) {
   console.error('FAIL engine:', err.message);
+  process.exit(1);
+}
+
+try {
+  await runStaticRelease();
+  console.log('ok static release');
+} catch (err) {
+  console.error('FAIL static release:', err.message);
   process.exit(1);
 }
 

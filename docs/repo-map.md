@@ -1,7 +1,7 @@
 # Repo Map
 
-Status: PLAN-0005 implemented locally; A2 levels 21-30 product review pending
-Maturity: M3
+Status: PLAN-0006 implemented locally; A2 static browser preview pending
+Maturity: M4
 Last updated: 2026-06-12
 
 ## Purpose
@@ -11,7 +11,7 @@ This repository contains a local deterministic grid block puzzle game with a Fas
 ## Current top-level structure
 
 - `AGENTS.md`: required operating modes, change control, permission policy, and quality gates.
-- `docs/`: project charter, glossary, roadmap, specs, plans, ADRs, standards, worklogs, and intake material.
+- `docs/`: project charter, glossary, roadmap, specs, plans, ADRs, standards, worklogs, deployment notes, and intake material.
 - `docs/status/CURRENT_STATE.md`: active project dashboard for future session startup.
 - `docs/handoff/`: concise handoff notes for incomplete, interrupted, blocked, or complex work.
 - `docs/worklog/`: session notes and durable discoveries.
@@ -49,7 +49,10 @@ frontend/
     physics.js
     renderer.js
     input.js
+    runtime-config.js
     storage.js
+    trace-dev.js
+    trace-recorder.js
     ui.js
 shared/
   app_contract.json
@@ -61,6 +64,7 @@ tests/
     engine.test.js
     physics.test.js
 tools/
+  export_static_site.py
   validate_levels.py
   generate_levels.py
 ```
@@ -77,6 +81,7 @@ tools/
 - Frontend renderer/UI layer: DOM/CSS grid rendering, HUD, controls, status messages, level selector, completion modal, responsive layout, and accessibility affordances.
 - Frontend storage layer: localStorage progress and settings.
 - Tooling layer: level validation and later level generation.
+- Static release layer: `tools/export_static_site.py` builds the Vercel-ready `dist/` artifact from frontend files, shared contract JSON, and canonical levels 1-50. The exporter removes dev-only trace UI/files, removes deployed undo controls, injects deployed runtime config, and emits static JSON under `dist/static-data/`.
 
 ## Files future agents should read first
 
@@ -105,6 +110,8 @@ bash -n scripts/agent/*.sh .githooks/*
 python3 -m py_compile scripts/agent/*.py .codex/hooks/*.py
 python3 -m json.tool shared/app_contract.json >/dev/null
 python3 -m json.tool backend/app/data/levels.json >/dev/null
+python3 -m json.tool package.json >/dev/null
+python3 -m json.tool package-lock.json >/dev/null
 python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
 python3 -m json.tool docs/intake/block_builder_levels_20_30_rebuilt.json >/dev/null
 python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
@@ -115,6 +122,7 @@ python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null
 .venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json --resource-source tests/fixtures/level_resource_requirements.json
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+.venv/bin/python -m pytest tests/test_static_export.py
 node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
 node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
@@ -132,6 +140,10 @@ node tools/solve-levels.mjs --mode validity --level 28 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 29 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 30 --max-states 1000000
 node tests/js/run-tests.mjs
+node -e "const p=require('./package.json'); if (p.scripts?.build !== 'python3 tools/export_static_site.py') throw new Error('missing build script')"
+python3 tools/export_static_site.py
+python3 -m json.tool dist/static-data/config.json >/dev/null
+python3 -m json.tool dist/static-data/levels.json >/dev/null
 ```
 
 ## Backend setup and run commands (current — BATCH-0002 complete)
@@ -172,6 +184,25 @@ node tests/js/run-tests.mjs
 ```
 
 Do not run network-backed installs until dependency and network approval are explicitly granted.
+
+## Static web release commands (current — PLAN-0006 local prep complete)
+
+```bash
+# Build the ignored static artifact:
+python3 tools/export_static_site.py
+
+# Validate the static artifact:
+.venv/bin/python -m pytest tests/test_static_export.py
+node tests/js/run-tests.mjs
+python3 -m json.tool dist/static-data/config.json >/dev/null
+python3 -m json.tool dist/static-data/levels.json >/dev/null
+
+# Optional local static preview for human A2 review:
+python3 -m http.server 4173 --directory dist
+# then visit: http://127.0.0.1:4173/
+```
+
+See `docs/deployment/vercel-static-release.md` for the Vercel project settings and domain routing notes. Vercel deployment, DNS, and remote Git publication remain manual A3 steps.
 
 ## Common patterns to establish
 

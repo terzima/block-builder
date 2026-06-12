@@ -27,14 +27,18 @@ function buildKeyMap(contract) {
  * @param {HTMLElement} root - element containing on-screen buttons
  * @param {object} contract - validated app contract
  * @param {(action: { type: string }) => void} dispatch
+ * @param {{ disabledActions?: Set<string>, documentObj?: Document }} [options]
  */
-export function bindInputs(root, contract, dispatch) {
+export function bindInputs(root, contract, dispatch, options = {}) {
   const keyMap = buildKeyMap(contract);
+  const disabledActions = options.disabledActions ?? new Set();
+  const documentObj = options.documentObj ?? document;
 
   // Keyboard handler — prevents default scroll/jump on game keys
-  document.addEventListener('keydown', e => {
+  documentObj.addEventListener('keydown', e => {
     const action = keyMap.get(e.code);
     if (!action) return;
+    if (disabledActions.has(action)) return;
     e.preventDefault();
     dispatch({ type: action });
   });
@@ -43,6 +47,8 @@ export function bindInputs(root, contract, dispatch) {
   root.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    dispatch({ type: btn.dataset.action });
+    const action = btn.dataset.action;
+    if (disabledActions.has(action)) return;
+    dispatch({ type: action });
   });
 }

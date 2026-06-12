@@ -2,13 +2,15 @@
 
 ## Active Objective
 
-First playable work is committed locally at `96545e9`. PLAN-0004 documentation and pre-CR-0010 implementation chunks are committed locally through `35480cd feat(solver): add level validation harness`. The project owner explicitly overrode the remaining level 20 replay-evidence gate on 2026-06-12 to avoid more solver time. PLAN-0004 is Completed with level 20 recorded as `UNPROVEN_REPLAY_EVIDENCE`; levels 1-19 have replay-certified evidence. PLAN-0005 levels 21-30 are implemented locally from `docs/intake/block_builder_levels_20_30_rebuilt.json`. Local playtest-only imports from `docs/intake/block_builder_levels_31_40_hardmode.json` and `docs/intake/block_builder_levels_41_50_reverse_designed.json` now expand canonical runtime data to levels 1-50; levels 31-50 are structurally validated for browser play, replay evidence is intentionally marked unproven, and implementation is stopped at manual browser playtest.
+First playable work is committed locally at `96545e9`. PLAN-0004 documentation and pre-CR-0010 implementation chunks are committed locally through `35480cd feat(solver): add level validation harness`. The project owner explicitly overrode the remaining level 20 replay-evidence gate on 2026-06-12 to avoid more solver time. PLAN-0004 is Completed with level 20 recorded as `UNPROVEN_REPLAY_EVIDENCE`; levels 1-19 have replay-certified evidence. PLAN-0005 levels 21-30 are implemented locally from `docs/intake/block_builder_levels_20_30_rebuilt.json`. Local playtest-only imports from `docs/intake/block_builder_levels_31_40_hardmode.json` and `docs/intake/block_builder_levels_41_50_reverse_designed.json` now expand canonical runtime data to levels 1-50; levels 31-50 are structurally validated for browser play, replay evidence is intentionally marked unproven. PLAN-0006 local static release prep is implemented for a future Vercel static web release at `block-builder.terzima.com`; the next gate is A2 local static browser preview before any A3 Vercel/DNS work.
 
 ## Active Contract
 
 - Spec: `docs/specs/SPEC-0003-frontend-gameplay-ui.md` (Accepted — CR-0003 wording update applied)
 - Spec: `docs/specs/SPEC-0004-level-expansion-pipeline.md` (Accepted — hardened for CR-0011)
 - Spec: `docs/specs/SPEC-0005-levels-21-30-expansion.md` (Accepted)
+- Spec: `docs/specs/SPEC-0006-vercel-static-web-release.md` (Accepted - Vercel static web release)
+- Plan: `docs/plans/PLAN-0006-vercel-static-web-release.md` (Implemented locally - A2 static browser preview pending; A3 Vercel deployment gate remains)
 - Plan: `docs/plans/PLAN-0005-levels-21-30-expansion.md` (Implemented locally — A2 product review checkpoint pending)
 - Plan: `docs/plans/PLAN-0004-level-expansion-pipeline.md` (Completed — level 20 replay evidence intentionally marked `UNPROVEN_REPLAY_EVIDENCE` by owner override)
 - Active Source Candidate: `docs/intake/candidate_levels_6_20.json` (planning/intake source only; not runtime data)
@@ -93,6 +95,9 @@ First playable work is committed locally at `96545e9`. PLAN-0004 documentation a
 - PLAN-0005 implementation status: `backend/app/data/levels.json` contains IDs 1-30 from the accepted expansion, `tests/fixtures/level_resource_requirements.json` covers IDs 6-30, `tests/fixtures/level_solutions.json` covers replay-certified IDs 1-19 and 21-30 with level 20 marked as a known replay-evidence failure, and API tests assert level 30 metadata/detail.
 - Local playtest import status: `backend/app/data/levels.json` now contains IDs 1-50, `backend/app/services/level_service.py` validates canonical IDs 1-50, candidate sources validate IDs 6-20, 20-30, 31-40, and 41-50, `tests/fixtures/level_solutions.json` marks levels 31-50 as `UNPROVEN_REPLAY_EVIDENCE`, and API tests assert level 50 metadata/detail.
 - Mobile LAN playtest status: `backend/app/settings.py` now trusts `10.0.0.117` by default so `TrustedHostMiddleware` allows phone browser requests to the Mac on the same network; `TRUSTED_HOSTS` still overrides the default list when set.
+- PLAN-0006 static release prep is implemented locally: `tools/export_static_site.py` builds ignored `dist/` from canonical levels 1-50, static JSON is generated under `dist/static-data/`, trace recorder UI/files are absent from the shipped artifact, deployed runtime config disables undo, and local dev mode keeps the API-backed UI path.
+- PLAN-0006 package metadata is in place: root `package.json` declares the static build script, and `package-lock.json` exists with no dependency additions for deterministic Vercel package-manager detection.
+- PLAN-0006 docs are updated: `docs/deployment/vercel-static-release.md` records artifact shape, local preview, Vercel settings, A2 preview gate, and A3 deployment/domain gate.
 - `AGENTS.md` now explicitly requires the repo-local writing docs skill for Change Requests, status dashboards, handoffs, repo maps, and other durable project documentation, not only specs/plans/batches.
 - `docs/intake/candidate_levels_6_20.json` contains candidate levels 6-20 for level-expansion planning. It is not accepted production data and must not be served or imported at runtime.
 
@@ -205,6 +210,14 @@ node --input-type=module -e "import { run } from './tests/js/solver.test.js'; ru
 node --input-type=module -e "import { run } from './tests/js/trace-recorder.test.js'; await run(); console.log('ok trace recorder');" → `ok trace recorder` ✓
 node tools/solve-levels.mjs --mode analyze-trace --level 17 --trace tests/fixtures/manual_traces/level_17_trace.json → `ANALYZED`, `traceReplay.valid=true`, strategic phase/recommendation output ✓
 node tests/js/run-tests.mjs → `All JS tests passed` ✓
+python3 -m json.tool package.json → pass ✓
+python3 -m json.tool package-lock.json → pass ✓
+node -e "const p=require('./package.json'); if (p.scripts?.build !== 'python3 tools/export_static_site.py') throw new Error('missing build script')" → `ok build script` ✓
+python3 tools/export_static_site.py --output /tmp/block-builder-dist → `Exported 50 levels` ✓
+python3 tools/export_static_site.py → `Exported static site to dist`; `Exported 50 levels` ✓
+python3 -m json.tool /tmp/block-builder-dist/static-data/config.json → pass ✓
+python3 -m json.tool /tmp/block-builder-dist/static-data/levels.json → pass ✓
+.venv/bin/python -m pytest tests/test_static_export.py → 2 passed ✓
 ```
 
 CR-0006 planning-doc checks:
@@ -279,32 +292,22 @@ Additional engine trace:
 node --input-type=module -e "<engine trace>" → levels 2-5 complete ✓
 ```
 
-## Files Changed (uncommitted)
+## PLAN-0006 Release Batch Files
 
-Modified:
-- `frontend/index.html` — adds dev-facing manual trace recorder controls and fallback JSON output.
-- `frontend/js/app.js` — wires trace capture through the existing engine dispatch path, invalidates undo/reset/level changes, exports on completion, and handles clipboard/download controls.
-- `frontend/js/ui.js` — adds trace recorder status, recording, output, and visibility helpers.
-- `frontend/style.css` — styles trace recorder controls and completed-trace fallback output.
-- `tools/solve-levels.mjs` — adds trace replay validation, trace macro analysis, analyze-trace CLI mode, compact strategic recommendations, trace-input guardrails for validity mode, region-logistics scaffold planning, access-bridge/support-closure inference, and replay-certified solution-evidence fallback.
-- `tests/js/run-tests.mjs` — runs trace recorder tests after engine tests and before solver tests.
-- `tests/js/solver.test.js` — adds trace replay/analyzer, invalid trace, compact output, trace-not-allowed, region-logistics, and level 17 replay assertions.
-- `tests/fixtures/level_solver_expectations.json` — adds trace analyzer and region-logistics fixture expectations.
-- `tests/fixtures/level_solutions.json` — includes replay-certified solution evidence for levels 1-19 and 21-30; levels 20 and 31-50 are marked as `UNPROVEN_REPLAY_EVIDENCE`.
-- `docs/status/CURRENT_STATE.md` — records Task 4F/4G/4H implementation status, trace fixture source, level 17 solver evidence, and the 18/19 temporary-block lifecycle blocker.
-- `docs/handoff/HANDOFF-2026-06-12-plan-0004-task-4h-18-19-solver.md` — concise restart note for the 18/19 solver debugging loop and recommended next path.
+PLAN-0006 local static release prep:
 
-New (untracked):
-- `frontend/js/trace-recorder.js` — pure manual trace recorder state/export/clipboard/download helpers.
-- `tests/js/trace-recorder.test.js` — trace recorder unit and replay tests.
-- `tests/fixtures/manual_traces/level_17_trace.json` — replay-valid manual level 17 trace copied from `docs/intake/level-17-trace.json`.
-- `docs/specs/SPEC-0005-levels-21-30-expansion.md` — accepted spec for levels 21-30 expansion.
-- `docs/plans/PLAN-0005-levels-21-30-expansion.md` — implementation plan for SPEC-0005; automated implementation is complete and A2 product review is pending.
-- `docs/intake/block_builder_levels_20_30_rebuilt.json` — intake source for SPEC-0005; level 20 is overlap/reference and levels 21-30 are new content.
-- `docs/intake/block_builder_levels_31_40_hardmode.json` — local playtest source for levels 31-40.
-- `docs/intake/block_builder_levels_41_50_reverse_designed.json` — local playtest source for levels 41-50.
-- `docs/intake/level-11-trace.json`, `docs/intake/level-12-trace.json`, `docs/intake/level-17-trace.json`, `docs/intake/level-18-trace.json`, `docs/intake/level-19-trace.json` — owner-provided manual trace source material.
-- `.superpowers/brainstorm/` — local visual brainstorming artifacts; not routine implementation input and should not be committed unless explicitly requested.
+- `frontend/js/runtime-config.js` — runtime mode normalization for local dev and deployed static mode.
+- `frontend/js/api.js` — static JSON data source support while preserving API mode.
+- `frontend/js/app.js`, `frontend/js/input.js`, `frontend/js/ui.js`, `frontend/js/trace-dev.js`, `frontend/index.html` — dev-only trace wiring, deployed undo disabling, and export-time removal markers.
+- `tools/export_static_site.py` — no-dependency static exporter for levels 1-50 and release artifact validation.
+- `tests/js/static-release.test.js`, `tests/test_static_export.py`, `tests/js/run-tests.mjs` — static release regression coverage.
+- `package.json`, `package-lock.json` — Vercel-detectable build metadata with no dependency additions.
+- `docs/deployment/vercel-static-release.md`, `docs/repo-map.md`, `docs/status/CURRENT_STATE.md` — static release docs and active checkpoint state.
+- `docs/specs/SPEC-0006-vercel-static-web-release.md`, `docs/plans/PLAN-0006-vercel-static-web-release.md` — accepted/ready planning docs from the PLAN-0006 setup flow.
+
+Local-only/unplanned-to-commit artifacts still present after this batch:
+
+- `.superpowers/` — local brainstorming artifacts.
 
 ## Known Deviations from PLAN-0002 (carried forward)
 
@@ -324,13 +327,17 @@ After PLAN-0005 automated checks pass, the project owner needs to review levels 
 
 The local playtest imports need manual browser review for levels 31-50. These levels are structurally valid and available in the app, but they are not solver/replay-certified.
 
+### Static release A2 checkpoint is active
+
+PLAN-0006 automated local prep is complete. The project owner needs to preview the generated static `dist/` site in a browser and confirm the shipped UI works without trace recorder controls and without deployed undo before any A3 Vercel project/domain work.
+
 ### Trace-capture A2 checkpoint is satisfied
 
 `docs/intake/level-17-trace.json` replay-validates against the current engine and has been copied to `tests/fixtures/manual_traces/level_17_trace.json` for Task 4G analyzer tests.
 
 ## Next Action
 
-Stop at manual browser playtest. Review levels 41-50 in the browser for geometry, playability, difficulty, and puzzle fit. Treat levels 31-50 as playtest-only until manual acceptance and any later replay/resource requirements are explicitly requested.
+Stop at PLAN-0006 A2 local static browser preview. Run `python3 tools/export_static_site.py`, serve `dist/` locally, and review the shipped static UI before any Vercel project, DNS, or production deployment work.
 
 ## Last Updated
 
