@@ -19,7 +19,26 @@ import { parseLevel, createInitialState, dispatchGameAction } from './engine.js'
 import { renderBoard, renderHud, renderLevelSelect, renderCompletion } from './renderer.js';
 import { bindInputs } from './input.js';
 import { loadProgress, recordCompletion } from './storage.js';
-import { setStatus, showCompletion, hideCompletion, setBusy } from './ui.js';
+import {
+  setStatus,
+  showCompletion,
+  hideCompletion,
+  setBusy,
+  setTraceStatus,
+  setTraceRecording,
+  showTraceOutput,
+  clearTraceOutput,
+} from './ui.js';
+import {
+  createTraceRecorder,
+  startTraceRecording,
+  recordTraceAction,
+  invalidateTraceRecording,
+  stopTraceRecording,
+  exportTraceRecording,
+  copyTraceToClipboard,
+  createTraceDownloadBlob,
+} from './trace-recorder.js';
 
 // ── App state ─────────────────────────────────────────────────────────────────
 
@@ -30,6 +49,8 @@ let currentRawLevel = null;   // raw LevelDefinition — passed to engine action
 let currentParsedLevel = null; // ParsedLevel — passed to renderer
 let gameState = null;
 let progress = null;
+let traceRecorder = null;
+let completedTraceJson = '';
 
 // DOM element references (resolved once on boot)
 const $ = id => document.getElementById(id);
@@ -41,6 +62,87 @@ function render() {
 
   renderBoard($('board'), gameState, currentParsedLevel);
   renderHud($('moves-count'), $('carried-state'), gameState);
+}
+
+// ── Trace recording ──────────────────────────────────────────────────────────
+
+function resetTraceRecorder(levelId) {
+  traceRecorder = createTraceRecorder({
+    levelId,
+    contractVersion: contract.version,
+  });
+  completedTraceJson = '';
+  clearTraceOutput();
+  setTraceRecording(false);
+  setTraceStatus('');
+}
+
+function startTraceForCurrentLevel() {
+  if (!currentRawLevel || !contract) return;
+  traceRecorder = startTraceRecording(createTraceRecorder({
+    levelId: currentRawLevel.id,
+    contractVersion: contract.version,
+  }));
+  completedTraceJson = '';
+  clearTraceOutput();
+  setTraceRecording(true);
+  setTraceStatus(`Recording level ${currentRawLevel.id}.`);
+}
+
+function invalidateActiveTrace(reason) {
+  if (!traceRecorder?.recording) return;
+  traceRecorder = invalidateTraceRecording(traceRecorder, reason);
+  setTraceRecording(false);
+  setTraceStatus(`Trace stopped: ${reason}.`);
+}
+
+function completeTraceIfNeeded(finalState) {
+  if (!traceRecorder?.recording) return;
+  traceRecorder = stopTraceRecording(traceRecorder, finalState);
+  setTraceRecording(false);
+
+  if (!traceRecorder.completed || traceRecorder.invalidated) return;
+
+  const trace = exportTraceRecording(traceRecorder);
+  completedTraceJson = JSON.stringify(trace, null, 2);
+  showTraceOutput(completedTraceJson);
+  setTraceStatus('Trace complete. Copying JSON...');
+
+  copyTraceToClipboard(completedTraceJson).then(result => {
+    if (completedTraceJson !== result.traceJson) return;
+    setTraceStatus(
+      result.ok
+        ? 'Trace complete. JSON copied to clipboard.'
+        : 'Trace complete. Clipboard unavailable; use Copy or Download.',
+    );
+  });
+}
+
+async function copyCompletedTrace() {
+  if (!completedTraceJson) return;
+  const result = await copyTraceToClipboard(completedTraceJson);
+  setTraceStatus(
+    result.ok
+      ? 'Trace JSON copied to clipboard.'
+      : 'Clipboard unavailable; use the selectable JSON or Download.',
+  );
+}
+
+function downloadCompletedTrace() {
+  if (!completedTraceJson) return;
+  const blob = createTraceDownloadBlob(completedTraceJson);
+  if (typeof Blob !== 'function' || !(blob instanceof Blob)) return;
+
+  const levelId = traceRecorder?.levelId ?? currentRawLevel?.id ?? 'unknown';
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `level-${levelId}-trace.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setTraceStatus('Trace JSON download started.');
 }
 
 // ── Dispatch ──────────────────────────────────────────────────────────────────
@@ -58,14 +160,30 @@ function dispatch(action) {
     return;
   }
 
+  if (action.type === A.reset || action.type === A.undo) {
+    invalidateActiveTrace(action.type);
+  }
+
+  const beforeState = gameState;
   const result = dispatchGameAction(gameState, action, currentRawLevel, contract);
   gameState = result.state;
+
+  if (traceRecorder?.recording) {
+    traceRecorder = recordTraceAction(
+      traceRecorder,
+      action.type,
+      beforeState,
+      result.state,
+      result,
+    );
+  }
 
   // Always surface the feedback message (valid or invalid)
   setStatus(result.message);
   render();
 
   if (result.completed) {
+    completeTraceIfNeeded(gameState);
     progress = recordCompletion(contract, gameState);
     const bestMoves = progress.bestMoves[gameState.levelId];
     renderCompletion(
@@ -82,6 +200,7 @@ function dispatch(action) {
 // ── Level loading ─────────────────────────────────────────────────────────────
 
 async function loadLevel(levelId) {
+  invalidateActiveTrace('level-change');
   hideCompletion();
   setBusy(true);
   setStatus('Loading…');
@@ -90,6 +209,7 @@ async function loadLevel(levelId) {
     currentRawLevel = await api.getLevel(levelId);
     currentParsedLevel = parseLevel(currentRawLevel, contract);
     gameState = createInitialState(currentRawLevel, contract);
+    resetTraceRecorder(levelId);
 
     renderLevelSelect($('level-select'), levels, levelId);
     render();
@@ -179,7 +299,12 @@ async function boot() {
       });
     }
 
-    // 8. Load the last-played or first level
+    // 8. Wire trace recorder controls
+    $('trace-record-button')?.addEventListener('click', startTraceForCurrentLevel);
+    $('trace-copy-button')?.addEventListener('click', copyCompletedTrace);
+    $('trace-download-button')?.addEventListener('click', downloadCompletedTrace);
+
+    // 9. Load the last-played or first level
     const startId = progress.lastLevelId ?? levels[0].id;
     await loadLevel(startId);
   } catch (err) {

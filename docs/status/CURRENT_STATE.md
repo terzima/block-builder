@@ -2,7 +2,7 @@
 
 ## Active Objective
 
-First playable work is committed locally at `96545e9`. PLAN-0004 documentation and pre-CR-0010 implementation chunks are committed locally through `35480cd feat(solver): add level validation harness`. Current uncommitted implementation work updates `tools/solve-levels.mjs`, `tests/js/solver.test.js`, `tests/fixtures/level_solver_expectations.json`, and `tests/fixtures/level_solutions.json` so the engine-backed construction-ledger solver returns `SOLVED` with replayable raw actions for required benchmark levels 10, 13, and 14, plus levels 11, 12, 15, and 16. Solver-produced actions for levels 11-15 have been copied into `tests/fixtures/level_solutions.json` after replay verification. PLAN-0004 is stopped before Task 5 completion because levels 17-20 remain solver-unproven, so `tests/fixtures/level_solutions.json` still cannot honestly be completed for levels 1-20 from solver output alone. The project owner has confirmed all current levels 1-20 are manually solvable; the remaining failure is solver/tooling capability, not current level invalidity. `CR-0011` is accepted. `SPEC-0004` is Accepted after CR-0011 hardening. `PLAN-0004` is Ready for Implementation after CR-0011 plan hardening and owner approval; implementation should resume from Task 4F.
+First playable work is committed locally at `96545e9`. PLAN-0004 documentation and pre-CR-0010 implementation chunks are committed locally through `35480cd feat(solver): add level validation harness`. The project owner has confirmed all current levels 1-20 are manually solvable; the remaining failure is solver/tooling capability, not current level invalidity. `CR-0011` is accepted. `SPEC-0004` is Accepted after CR-0011 hardening. `PLAN-0004` is Ready for Implementation after CR-0011 plan hardening and owner approval. PLAN-0004 Task 4F trace recorder UI and replay tests are implemented locally. Implementation is stopped at the A2 trace-capture checkpoint because `tests/fixtures/manual_traces/level_17_trace.json` does not exist yet, so Task 4G cannot honestly create analyzer fixtures from replay-valid recorder output.
 
 ## Active Contract
 
@@ -77,6 +77,8 @@ First playable work is committed locally at `96545e9`. PLAN-0004 documentation a
 - `CR-0011` is accepted. It requires a trace-informed endgame solver reset that adds dev-facing trace capture, replay validation, strategic/order-agnostic trace macro analysis, trace-to-solver feedback recommendations, anti-overfit rules, region-logistics planning, and level 17 as the first endgame benchmark before resuming implementation.
 - `SPEC-0004` is accepted after CR-0011 hardening. It now defines trace capture/export shape, trace analyzer output, trace-to-solver recommendation fields, anti-overfit rules, region-logistics planning, level 16 regression, level 17 endgame benchmark, and trace-related validation/error gates.
 - `PLAN-0004` is Ready for Implementation after CR-0011 hardening and owner approval. It adds trace recorder/analyzer implementation tasks, a level 17 manual trace fixture checkpoint, region-logistics solver tasks, anti-overfit tests, exact validation commands, rollback steps, risks, and stop conditions.
+- PLAN-0004 Task 4F is implemented locally: the browser UI now has a Record/Copy/Download manual trace recorder, trace capture invalidates on undo/reset/level changes, completion exports SPEC-0004-shaped JSON, clipboard failures keep visible/selectable fallback JSON, and `tests/js/trace-recorder.test.js` covers recorder state, replay validity, invalidation, export shape, and clipboard fallback.
+- PLAN-0004 is stopped before Task 4G because no replay-valid `tests/fixtures/manual_traces/level_17_trace.json` fixture exists. This is the planned A2 trace-capture checkpoint.
 - `AGENTS.md` now explicitly requires the repo-local writing docs skill for Change Requests, status dashboards, handoffs, repo maps, and other durable project documentation, not only specs/plans/batches.
 - `docs/intake/candidate_levels_6_20.json` contains candidate levels 6-20 for level-expansion planning. It is not accepted production data and must not be served or imported at runtime.
 
@@ -166,7 +168,8 @@ node tools/solve-levels.mjs --mode validity --level 16 --max-states 1000000 → 
 node tools/solve-levels.mjs --mode analyze --level 13 --max-states 2000000 → `ANALYZED` ✓
 node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000 → `ANALYZED` with recommendation ✓
 node --input-type=module -e "import { run } from './tests/js/solver.test.js'; run(); console.log('ok solver');" → `ok solver` ✓
-node tests/js/run-tests.mjs → FAIL: solution fixture coverage currently includes levels 1-15 only ✗
+node --input-type=module -e "import { run } from './tests/js/trace-recorder.test.js'; await run(); console.log('ok trace recorder');" → `ok trace recorder` ✓
+node tests/js/run-tests.mjs → `ok physics`, `ok engine`, `ok trace recorder`, `ok solver`, then FAIL: solution fixture coverage currently includes levels 1-15 only ✗
 ```
 
 CR-0006 planning-doc checks:
@@ -241,17 +244,16 @@ node --input-type=module -e "<engine trace>" → levels 2-5 complete ✓
 ## Files Changed (uncommitted)
 
 Modified:
-- `tools/solve-levels.mjs` — CR-0010 construction-ledger search now uses canonical block-position state keys, engine-backed legal expansion, parent-linked construction progress search, terrain-assisted scaffold/access target selection, solved benchmark macro reports, and compact failure diagnostics for remaining unproven expanded levels.
-- `tests/js/solver.test.js` — tightened canonical-state, invalid-action, construction-ledger macro, benchmark replay, and solved-output metric assertions.
-- `tests/fixtures/level_solver_expectations.json` — requires levels 10, 13, 14, and 16 to return `SOLVED`.
-- `tests/fixtures/level_solutions.json` — includes verified solver-produced replay actions for levels 11-15.
-- `docs/specs/SPEC-0004-level-expansion-pipeline.md` — hardened for accepted CR-0011 trace-informed endgame solver reset and marked Accepted.
-- `docs/plans/PLAN-0004-level-expansion-pipeline.md` — hardened and marked Ready for Implementation for CR-0011 trace recorder/analyzer and region-logistics solver reset implementation.
-- `docs/status/CURRENT_STATE.md` — records SPEC-0004 acceptance, PLAN-0004 CR-0011 ready status, and next implementation action.
+- `frontend/index.html` — adds dev-facing manual trace recorder controls and fallback JSON output.
+- `frontend/js/app.js` — wires trace capture through the existing engine dispatch path, invalidates undo/reset/level changes, exports on completion, and handles clipboard/download controls.
+- `frontend/js/ui.js` — adds trace recorder status, recording, output, and visibility helpers.
+- `frontend/style.css` — styles trace recorder controls and completed-trace fallback output.
+- `tests/js/run-tests.mjs` — runs trace recorder tests after engine tests and before solver tests.
+- `docs/status/CURRENT_STATE.md` — records Task 4F implementation status and the A2 trace-capture checkpoint.
 
 New (untracked):
-- `docs/change-requests/CR-0011-trace-informed-endgame-solver-reset.md` — accepted Change Request for trace-informed endgame solver reset and strategic trace-to-solver feedback.
-- `docs/handoff/HANDOFF-0008-plan-0004-cr-0010-solver.md` — restart package for the remaining CR-0010 solver/solution-evidence work.
+- `frontend/js/trace-recorder.js` — pure manual trace recorder state/export/clipboard/download helpers.
+- `tests/js/trace-recorder.test.js` — trace recorder unit and replay tests.
 - `.superpowers/brainstorm/` — local visual brainstorming artifacts; not routine implementation input and should not be committed unless explicitly requested.
 
 ## Known Deviations from PLAN-0002 (carried forward)
@@ -268,13 +270,13 @@ New (untracked):
 
 After PLAN-0004 automated checks pass, the project owner still needs to review expanded levels 6-20 for difficulty curve, scaffold feel, visual legibility, and product fit.
 
-### Trace-capture A2 checkpoint may be needed
+### Trace-capture A2 checkpoint is reached
 
-After Task 4F, if no replay-valid `tests/fixtures/manual_traces/level_17_trace.json` exists, the project owner needs to record level 17 through the local dev trace recorder and provide the exported JSON before Task 4G analyzer validation can complete.
+No replay-valid `tests/fixtures/manual_traces/level_17_trace.json` exists. The project owner needs to record level 17 through the local dev trace recorder and provide the exported JSON before Task 4G analyzer validation can complete.
 
 ## Next Action
 
-Resume `PLAN-0004` implementation from Task 4F: trace recorder UI and replay tests. Continue through Task 4G and Task 4H only while the plan's automated gates pass and no A2/A3 stop condition is reached.
+Stop at the PLAN-0004 Task 4F A2 trace-capture checkpoint. After a replay-valid level 17 trace export is available, resume Task 4G by adding `tests/fixtures/manual_traces/level_17_trace.json` from that recorder export, then implement the trace analyzer tests and CLI mode.
 
 ## Last Updated
 

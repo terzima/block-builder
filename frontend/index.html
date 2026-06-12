@@ -69,6 +69,23 @@
         </div>
       </div>
 
+      <!-- Manual trace recorder: dev-only export aid, no persistence -->
+      <section id="trace-panel" class="trace-panel" aria-label="Manual trace recorder">
+        <div class="trace-actions">
+          <button id="trace-record-button" class="btn-control btn-meta" type="button">Record</button>
+          <button id="trace-copy-button" class="btn-control btn-meta" type="button" hidden>Copy Trace</button>
+          <button id="trace-download-button" class="btn-control btn-meta" type="button" hidden>Download Trace</button>
+        </div>
+        <p id="trace-status" class="trace-status" role="status" aria-live="polite"></p>
+        <textarea
+          id="trace-output"
+          class="trace-output"
+          aria-label="Completed trace JSON"
+          readonly
+          hidden
+        ></textarea>
+      </section>
+
       <!-- Completion dialog -->
       <div
         id="completion-dialog"
