@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   analyzeLevel,
+  canonicalizeState,
   createFailureSignature,
   createStateKey,
+  expandLegalActions,
   isFailureDominated,
   solveLevel,
 } from '../../tools/solve-levels.mjs';
@@ -103,6 +105,30 @@ export function run() {
     createStateKey(equivalentWithDifferentHistory),
     'state key ignores non-positional history and move count',
   );
+  const identityPermutation = {
+    ...initial,
+    blocks: initial.blocks.map((block, index) => ({
+      ...block,
+      id: `permuted-${initial.blocks.length - index}`,
+    })),
+  };
+  assert.equal(
+    createStateKey(initial),
+    createStateKey(identityPermutation),
+    'state key ignores engine-internal block ids',
+  );
+  const canonical = canonicalizeState(initial);
+  assert.deepEqual(
+    Object.keys(canonical).sort(),
+    ['blocks', 'carried', 'facing', 'levelId', 'player', 'status'].sort(),
+    'canonical state has only solver-equivalence fields',
+  );
+  assert.equal(
+    expandLegalActions({ ...initial, facing: 'left' }, levelById(1), CONTRACT)
+      .some(transition => transition.action === 'moveLeft' && transition.state.player.col < initial.player.col),
+    false,
+    'invalid move transitions are not enqueued',
+  );
 
   const signature = createFailureSignature({
     planner: {
@@ -189,6 +215,25 @@ export function run() {
     assert.equal(report.status, budget.expectedStatus, `level ${level.id}: status`);
     assert.ok(report.statesExpanded <= budget.maxStates, `level ${level.id}: max states`);
     assert.ok(report.timeMs <= budget.maxTimeMs, `level ${level.id}: max time`);
+    if (budget.maxActions) {
+      assert.ok(report.actions.length <= budget.maxActions, `level ${level.id}: max actions`);
+    }
+    if (budget.requiresConstructionLedger) {
+      assert.ok(
+        report.macroPlan.steps.some(step => step.macroId.startsWith('construction-ledger-search-')),
+        `level ${level.id}: construction-ledger macro step`,
+      );
+    }
+    if (budget.requiresMacroPlan) {
+      assert.ok(report.macroPlan.steps.length > 0, `level ${level.id}: accepted macro steps`);
+      assert.deepEqual(
+        report.macroPlan.steps.flatMap(step => step.rawActions),
+        report.actions,
+        `level ${level.id}: macro raw actions flatten to report actions`,
+      );
+    }
+    assert.notEqual(report.summary.solutionLength, undefined, `level ${level.id}: solution length`);
+    assert.notEqual(report.summary.maxQueueSize, undefined, `level ${level.id}: max queue`);
     const finalState = replayActions(level, report.actions);
     assert.equal(finalState.status, 'completed', `level ${level.id}: replayed solver solution`);
   }
@@ -209,6 +254,12 @@ export function run() {
     level13Expectation.allowedFinalStatuses.includes(level13.status),
     true,
     'current level 13 returns an allowed final status',
+  );
+  assert.ok(level13.macroPlan.steps.length > 0, 'current level 13 returns accepted macro steps');
+  assert.deepEqual(
+    level13.macroPlan.steps.flatMap(step => step.rawActions),
+    level13.actions,
+    'current level 13 macro actions flatten to final actions',
   );
   if (level13.status !== 'SOLVED') {
     for (const field of level13Expectation.requiredDiagnosticsWhenUnsolved) {

@@ -10,12 +10,15 @@
     { "levelId": 7, "expectedStatus": "SOLVED", "maxStates": 15000, "maxTimeMs": 1000 },
     { "levelId": 8, "expectedStatus": "SOLVED", "maxStates": 20000, "maxTimeMs": 1000 },
     { "levelId": 9, "expectedStatus": "SOLVED", "maxStates": 20000, "maxTimeMs": 1000 },
-    { "levelId": 10, "expectedStatus": "SOLVED", "maxStates": 50000, "maxTimeMs": 1000 }
+    { "levelId": 10, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true },
+    { "levelId": 13, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "minActions": 1, "maxActions": 1000, "requiresConstructionLedger": true, "requiresMacroPlan": true, "requiresReplay": true, "requiresCarryUpReservation": true },
+    { "levelId": 14, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true },
+    { "levelId": 16, "expectedStatus": "SOLVED", "maxStates": 1000000, "maxTimeMs": 30000, "requiresConstructionLedger": true, "requiresReplay": true }
   ],
   "currentLevel13": {
     "levelId": 13,
-    "allowedFinalStatuses": ["SOLVED", "FAILED_PREFLIGHT", "UNSOLVABLE_EXHAUSTED"],
-    "disallowedFinalStatuses": ["UNPROVEN_WITHIN_LIMIT"],
+    "allowedFinalStatuses": ["SOLVED"],
+    "disallowedFinalStatuses": ["FAILED_PREFLIGHT", "UNPROVEN_WITHIN_LIMIT", "UNSOLVABLE_EXHAUSTED"],
     "requiredDiagnosticsWhenUnsolved": [
       "availableBlocks",
       "requiredFinalScaffoldBlocks",

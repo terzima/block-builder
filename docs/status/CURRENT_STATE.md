@@ -2,13 +2,13 @@
 
 ## Active Objective
 
-First playable work is committed locally at `96545e9`. CR-0003 is complete locally (accepted 2026-06-10), with Sub-change A and Sub-change B implemented. The project owner accepted the first-playable A2 UX/product checkpoint on 2026-06-11. `SPEC-0004` was previously accepted and `PLAN-0004` implementation started. `CR-0004` is accepted and implemented. `CR-0005` is accepted. `CR-0006` is accepted and implemented locally through stack-stability physics, level 13 resource revision, deterministic level-resource validation, and surplus-block policy. `CR-0007` is accepted and implemented locally through solver expectations, deterministic preflight, solver/analyzer CLI, exact-state deduplication helpers, failure-signature dominance helpers, repeated-bad-plan pruning evidence, and current-level-13 decisive diagnostics. `CR-0008` is accepted and implemented locally by adding exactly three supported, reachable lower-yard blocks to level 13 while preserving the Double Bench structure. The project owner has confirmed all current levels 1-20 are solvable by manual play. PLAN-0004 is stopped at automated solver/solution evidence: resource checks pass and current levels are manually solvable, but level 13 still has no replayable solver-produced solution evidence. `CR-0009` is accepted; `SPEC-0004` is accepted after CR-0009 hardening, and a CR-0009 implementation attempt added compact/default layered solver report fields and debug-trace shaping to `tools/solve-levels.mjs`, but current canonical level 13 still returns a non-solved final status. `CR-0010` is accepted and the hardened `SPEC-0004` CR-0010 changes are accepted. `PLAN-0004` is Ready for Implementation after CR-0010 hardening for the engine-backed canonical state-space solver, construction ledger, Level 13 first benchmark, and levels 10 and 14 generalization benchmarks.
+First playable work is committed locally at `96545e9`. PLAN-0004 documentation and pre-CR-0010 implementation chunks are committed locally through `35480cd feat(solver): add level validation harness`. Current uncommitted implementation work updates `tools/solve-levels.mjs`, `tests/js/solver.test.js`, `tests/fixtures/level_solver_expectations.json`, and `tests/fixtures/level_solutions.json` so the engine-backed construction-ledger solver returns `SOLVED` with replayable raw actions for required benchmark levels 10, 13, and 14, plus levels 11, 12, 15, and 16. Solver-produced actions for levels 11-15 have been copied into `tests/fixtures/level_solutions.json` after replay verification. PLAN-0004 is stopped before Task 5 completion because levels 17-20 remain solver-unproven, so `tests/fixtures/level_solutions.json` still cannot honestly be completed for levels 1-20 from solver output alone. The project owner has confirmed all current levels 1-20 are manually solvable; the remaining failure is solver/tooling capability, not current level invalidity. `CR-0011` is accepted. `SPEC-0004` is Accepted after CR-0011 hardening. `PLAN-0004` is Ready for Implementation after CR-0011 plan hardening and owner approval; implementation should resume from Task 4F.
 
 ## Active Contract
 
 - Spec: `docs/specs/SPEC-0003-frontend-gameplay-ui.md` (Accepted — CR-0003 wording update applied)
-- Spec: `docs/specs/SPEC-0004-level-expansion-pipeline.md` (Accepted — hardened for CR-0010)
-- Plan: `docs/plans/PLAN-0004-level-expansion-pipeline.md` (Ready for Implementation — hardened for CR-0010)
+- Spec: `docs/specs/SPEC-0004-level-expansion-pipeline.md` (Accepted — hardened for CR-0011)
+- Plan: `docs/plans/PLAN-0004-level-expansion-pipeline.md` (Ready for Implementation — hardened for CR-0011)
 - Active Source Candidate: `docs/intake/candidate_levels_6_20.json` (planning/intake source only; not runtime data)
 - Plan: `docs/plans/PLAN-0003-frontend-gameplay-ui.md` (Completed — first-playable A2 checkpoint accepted)
 - Batch: `docs/plans/batches/BATCH-0003-first-playable-ui.md` (Completed)
@@ -19,8 +19,9 @@ First playable work is committed locally at `96545e9`. CR-0003 is complete local
 - Change Requests: `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md` (Accepted; SPEC-0004/PLAN-0004 hardened)
 - Change Requests: `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md` (Accepted; SPEC-0004/PLAN-0004 hardened)
 - Change Requests: `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md` (Accepted; implemented locally)
-- Change Requests: `docs/change-requests/CR-0009-physics-certified-macro-solver.md` (Accepted; SPEC-0004 accepted, PLAN-0004 ready for implementation)
-- Change Requests: `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md` (Accepted; SPEC-0004 hardened, PLAN-0004 ready for implementation)
+- Change Requests: `docs/change-requests/CR-0009-physics-certified-macro-solver.md` (Accepted; solver strategy superseded where CR-0010/CR-0011 conflict)
+- Change Requests: `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md` (Accepted; implementation scaffold preserved, solver strategy superseded where CR-0011 conflicts)
+- Change Requests: `docs/change-requests/CR-0011-trace-informed-endgame-solver-reset.md` (Accepted; SPEC-0004 accepted and PLAN-0004 ready for implementation)
 - Branch: `codex/application-scaffold`
 
 ## Current Status
@@ -41,7 +42,7 @@ First playable work is committed locally at `96545e9`. CR-0003 is complete local
 - PLAN-0004 Task 4 API tests are complete and passing.
 - PLAN-0004 Task 4A is implemented: `frontend/js/engine.js` rejects pickup of a block with another block directly above it, and `tests/js/engine.test.js` covers the invalid action contract.
 - PLAN-0004 Task 4B is implemented: `tests/fixtures/level_resource_requirements.json` exists, `analyze_level_resources(...)` validates resource manifests, `tools/validate_levels.py --resource-source ...` reports resource analysis, and level 13 row 12 is revised in both canonical and candidate JSON.
-- PLAN-0004 Task 5 automated solution evidence is paused: `tests/js/level-solutions.test.js` and `tests/fixtures/level_solutions.json` exist, but the fixture currently covers only levels 1-10, so JS tests fail exact level coverage for levels 11-20. The project owner has already confirmed current levels 1-20 are manually solvable.
+- PLAN-0004 Task 5 automated solution evidence is paused: `tests/js/level-solutions.test.js` and `tests/fixtures/level_solutions.json` exist, and the fixture currently covers levels 1-15. JS tests still fail exact level coverage for levels 16-20. The project owner has already confirmed current levels 1-20 are manually solvable.
 - `CR-0005` is accepted and allows manual solution capture for levels 11-20 while keeping automated replay mandatory.
 - `CR-0006` is accepted and implemented locally. SPEC-0004 and PLAN-0004 require a stack-stability pickup rule, a level 13 block-supply revision, surplus-block policy, and deterministic block-resource analysis for levels 6-20.
 - `CR-0007` is accepted and implemented locally. It adds a no-dependency deterministic solver pipeline with hard preflight gates, goal-directed validity mode, design-analysis metrics, behavior/performance gates, exact-state deduplication helpers, failure-signature dominance helpers, repeated-bad-plan pruning, and actionable recommendations for level redesign.
@@ -54,16 +55,28 @@ First playable work is committed locally at `96545e9`. CR-0003 is complete local
   - `node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000` returns `ANALYZED` with summary metrics, difficulty signals, and an `add_reachable_blocks` recommendation.
 - `CR-0008` is accepted and implemented locally: level 13 row 12 is now `#PBBBBBB.B.B.B.B.B.B.B..#`, adding exactly three supported, reachable lower-yard blocks and raising level 13 to 15 movable blocks.
 - Post-CR-0008 resource validation passes: level 13 now reports `availableBlocks=15`, `requiredBlocks=12`, and `surplusBlocks=3`.
-- Post-CR-0008 solver validity for level 13 no longer fails preflight, but it does not find a replayable solution within the accepted `1000000` state budget. Current output is `UNSOLVABLE_EXHAUSTED` with `reason=LEVEL_SOLVER_LEVEL13_UNPROVEN`, `availableBlocks=15`, `requiredFinalScaffoldBlocks=15`, `deficitBlocks=0`, and `statesExpanded=1000000`.
+- Before CR-0010, post-CR-0008 solver validity for level 13 no longer failed preflight but still did not find a replayable solution within the accepted `1000000` state budget. That failure is now superseded by the CR-0010 construction-ledger implementation below.
 - Post-CR-0008 analyzer output for level 13 recommends `inspect_goal_scaffold`; solution evidence remains blocked.
 - The project owner confirmed all current levels are solvable. Level 13 was manually completed in roughly 230 moves, so the current failure is a solver architecture gap rather than level impossibility.
 - `CR-0009` is accepted. It replaces raw-action Level 13 search with a physics-certified macro construction solver. Macro plans may reason about scaffold targets, work platforms, and recoverable blocks, but every macro must be decomposed into legal engine actions before it can be accepted.
 - `SPEC-0004` is accepted after CR-0009 hardening: current level 13 must return `SOLVED` with replayable raw actions as a known-solvable benchmark; default solver output is compact and design-facing, while `--debug-trace` exposes macro-plan and failed-macro details.
 - `PLAN-0004` was Ready for Implementation after CR-0009 hardening: that solver strategy is now superseded by accepted CR-0010 where it conflicts.
 - CR-0009 implementation attempt status: `tools/solve-levels.mjs` now exposes the layered default output fields (`phase`, `failedInvariant`, `failureCategory`, `cause`, capped `topRecommendations`, compact `summary`, and `debugTraceAvailable`) plus `--debug-trace` parsing and macro helper exports, but it still does not produce a replayable Level 13 solution.
-- Current Level 13 solver blocker: `node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --format json` returns `UNSOLVABLE_EXHAUSTED`, `failureCategory=TACTICAL_REPLAY_FAILED`, `failedInvariant=current_level_13_solves_with_macro_replay`, and `statesExpanded=1000000`.
+- Current Level 13 solver blocker is resolved: `node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --format json` returns `SOLVED` with a replayable action list.
 - `CR-0010` is accepted as the next solver-contract remediation. It keeps the existing solver CLI/reporting/replay scaffolding, supersedes only conflicting CR-0007/CR-0009 solver-strategy wording, requires an engine-backed canonical state-space solver with a construction ledger, and treats Level 13 as the first benchmark rather than the only benchmark. `SPEC-0004` is accepted after CR-0010 hardening and names levels 10 and 14 as additional required solver generalization benchmarks.
-- `PLAN-0004` is Ready for Implementation after CR-0010 hardening. Task 4C/4D now require canonical state-key tests, invalid-action non-enqueue tests, construction-ledger fixtures, benchmark gates for levels 10/13/14, solved-output metrics (`solutionLength`, `statesExpanded`, `maxQueueSize`), and no per-level hardcoded solver actions.
+- `PLAN-0004` CR-0010 Task 4C/4D is partially implemented after the current session: canonical state-key tests, invalid-action non-enqueue tests, construction-ledger benchmark gates, solved-output metrics (`solutionLength`, `statesExpanded`, `maxQueueSize`), and replay checks now pass for levels 10, 13, and 14.
+- Current CR-0010 solver status:
+  - `node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000` returns `SOLVED`, `statesExpanded=486`, `solutionLength=63`.
+  - `node tools/solve-levels.mjs --mode validity --level 11 --max-states 1000000` returns `SOLVED`, `statesExpanded=138698`, `solutionLength=103`.
+  - `node tools/solve-levels.mjs --mode validity --level 12 --max-states 1000000` returns `SOLVED`, `statesExpanded=1380`, `solutionLength=92`.
+  - `node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000` returns `SOLVED`, `statesExpanded=278090`, `maxQueueSize=23652`, `solutionLength=262`.
+  - `node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000` returns `SOLVED`, `statesExpanded=2456`, `solutionLength=149`.
+  - `node tools/solve-levels.mjs --mode validity --level 15 --max-states 1000000` returns `SOLVED`, `statesExpanded=103`, `solutionLength=61`.
+  - `node tools/solve-levels.mjs --mode validity --level 16 --max-states 1000000` returns `SOLVED`, `statesExpanded=12626`, `solutionLength=163`, using terrain-assisted access scaffolds.
+  - Levels 17, 18, 19, and 20 return `UNPROVEN_WITHIN_LIMIT` from `construction_ledger_search` with `failureCategory=SEARCH_BUDGET_UNPROVEN` and recommendation `improve_carry_up_reservation`.
+- `CR-0011` is accepted. It requires a trace-informed endgame solver reset that adds dev-facing trace capture, replay validation, strategic/order-agnostic trace macro analysis, trace-to-solver feedback recommendations, anti-overfit rules, region-logistics planning, and level 17 as the first endgame benchmark before resuming implementation.
+- `SPEC-0004` is accepted after CR-0011 hardening. It now defines trace capture/export shape, trace analyzer output, trace-to-solver recommendation fields, anti-overfit rules, region-logistics planning, level 16 regression, level 17 endgame benchmark, and trace-related validation/error gates.
+- `PLAN-0004` is Ready for Implementation after CR-0011 hardening and owner approval. It adds trace recorder/analyzer implementation tasks, a level 17 manual trace fixture checkpoint, region-logistics solver tasks, anti-overfit tests, exact validation commands, rollback steps, risks, and stop conditions.
 - `AGENTS.md` now explicitly requires the repo-local writing docs skill for Change Requests, status dashboards, handoffs, repo maps, and other durable project documentation, not only specs/plans/batches.
 - `docs/intake/candidate_levels_6_20.json` contains candidate levels 6-20 for level-expansion planning. It is not accepted production data and must not be served or imported at runtime.
 
@@ -146,11 +159,14 @@ python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null → pass ✓
 .venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json --resource-source tests/fixtures/level_resource_requirements.json → canonical/candidate/resource validation pass ✓
 .venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py → 35 passed, 1 known StarletteDeprecationWarning ✓
 node tools/solve-levels.mjs --mode validity --level 1 --max-states 500 → `SOLVED`, `statesExpanded=4` ✓
-node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --format json → `UNSOLVABLE_EXHAUSTED`, `failureCategory=TACTICAL_REPLAY_FAILED`, `failedInvariant=current_level_13_solves_with_macro_replay`, `statesExpanded=1000000` ✗
-node tools/solve-levels.mjs --mode analyze --level 13 --max-states 2000000 → `ANALYZED`, recommendation `inspect_goal_scaffold` ✓
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000 → `SOLVED`, `statesExpanded=486`, `solutionLength=63` ✓
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --format json → `SOLVED`, `statesExpanded=278090`, `solutionLength=262` ✓
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000 → `SOLVED`, `statesExpanded=2456`, `solutionLength=149` ✓
+node tools/solve-levels.mjs --mode validity --level 16 --max-states 1000000 → `SOLVED`, `statesExpanded=12626`, `solutionLength=163` ✓
+node tools/solve-levels.mjs --mode analyze --level 13 --max-states 2000000 → `ANALYZED` ✓
 node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000 → `ANALYZED` with recommendation ✓
 node --input-type=module -e "import { run } from './tests/js/solver.test.js'; run(); console.log('ok solver');" → `ok solver` ✓
-node tests/js/run-tests.mjs → FAIL: solution fixture coverage currently includes levels 1-10 only ✗
+node tests/js/run-tests.mjs → FAIL: solution fixture coverage currently includes levels 1-15 only ✗
 ```
 
 CR-0006 planning-doc checks:
@@ -212,9 +228,10 @@ git diff → reviewed ✓
 ```
 
 Solution evidence status:
-- `tests/fixtures/level_solutions.json` currently includes replayed solutions for levels 1-10.
-- `tests/js/level-solutions.test.js` requires exact coverage for levels 1-20 and is intentionally failing until levels 11-20 are captured.
-- Local staged search found possible replay paths for some later levels during this session, but no durable exact fixture entries are accepted for levels 11-20 yet.
+- `tests/fixtures/level_solutions.json` currently includes replayed solutions for levels 1-15.
+- `tests/js/level-solutions.test.js` requires exact coverage for levels 1-20 and is intentionally failing until levels 16-20 are captured.
+- Solver output provides replayable candidate actions for level 16, but the current resume request only asked to copy verified levels 11-15 into the solution fixture.
+- Solver output still does not provide replayable actions for levels 17-20, so Task 5 cannot complete in the current state.
 
 Additional engine trace:
 ```
@@ -224,37 +241,17 @@ node --input-type=module -e "<engine trace>" → levels 2-5 complete ✓
 ## Files Changed (uncommitted)
 
 Modified:
-- `backend/app/data/levels.json` — expanded to include levels 6-20 from `docs/intake/candidate_levels_6_20.json`; level 1 geometry fixed by CR-0004.
-- `docs/intake/candidate_levels_6_20.json` — level 13 row 12 revised by CR-0006 and CR-0008.
-- `backend/app/services/level_service.py` — PLAN-0004 validator changes plus CR-0006 resource analysis.
-- `frontend/js/engine.js` — CR-0006 stack-stability pickup guard.
-- `tests/test_level_validation.py` — PLAN-0004 tests for expanded canonical data, SPEC-0004 validation codes, and CR-0006 resource analysis.
-- `tests/test_api.py` — PLAN-0004 API assertions for 20-level list and level 20 detail.
-- `tests/js/engine.test.js` — CR-0006 stack-stability pickup assertions.
-- `tests/js/run-tests.mjs` — now runs solution replay tests after engine tests.
-- `tools/validate_levels.py` — PLAN-0004 candidate-source CLI support and CR-0006 resource-source support.
-- `docs/repo-map.md` — current verification commands include candidate/resource/solution JSON and JS tests.
-- `docs/specs/SPEC-0004-level-expansion-pipeline.md` — hardened for CR-0006 stack-stability/resource policy, CR-0007 deterministic solver/analyzer contracts, CR-0008 level 13 resources, CR-0009 physics-certified macro solving, and CR-0010 engine-backed canonical state-space plus construction-ledger benchmark requirements.
-- `docs/plans/PLAN-0004-level-expansion-pipeline.md` — hardened for CR-0006 implementation files, CR-0007 solver/analyzer tasks, CR-0008 level 13 resources, CR-0009 macro solver operators, layered solver reporting, CR-0010 engine-backed canonical state-space solving, construction-ledger fixtures, benchmark levels 10/13/14, failure-signature pruning, repeated-bad-plan fixtures, rollback, risks, and stop conditions.
-- `docs/status/CURRENT_STATE.md` — records A2 acceptance, implemented CR-0004/CR-0006, accepted CR-0007, accepted CR-0010, the CR-0010 PLAN-0004 Ready for Implementation state, and the next implementation point.
-- `AGENTS.md` — durable documentation work now explicitly uses the repo-local writing docs skill.
+- `tools/solve-levels.mjs` — CR-0010 construction-ledger search now uses canonical block-position state keys, engine-backed legal expansion, parent-linked construction progress search, terrain-assisted scaffold/access target selection, solved benchmark macro reports, and compact failure diagnostics for remaining unproven expanded levels.
+- `tests/js/solver.test.js` — tightened canonical-state, invalid-action, construction-ledger macro, benchmark replay, and solved-output metric assertions.
+- `tests/fixtures/level_solver_expectations.json` — requires levels 10, 13, 14, and 16 to return `SOLVED`.
+- `tests/fixtures/level_solutions.json` — includes verified solver-produced replay actions for levels 11-15.
+- `docs/specs/SPEC-0004-level-expansion-pipeline.md` — hardened for accepted CR-0011 trace-informed endgame solver reset and marked Accepted.
+- `docs/plans/PLAN-0004-level-expansion-pipeline.md` — hardened and marked Ready for Implementation for CR-0011 trace recorder/analyzer and region-logistics solver reset implementation.
+- `docs/status/CURRENT_STATE.md` — records SPEC-0004 acceptance, PLAN-0004 CR-0011 ready status, and next implementation action.
 
 New (untracked):
-- `docs/change-requests/CR-0004-level-1-support-geometry-fix.md` — accepted Change Request.
-- `docs/change-requests/CR-0005-solution-evidence-capture.md` — accepted Change Request for missing level solution evidence.
-- `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md` — accepted Change Request for stack stability and level resource validation.
-- `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md` — accepted Change Request for solver/preflight/design-analysis tooling.
-- `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md` — accepted Change Request for the current level 13 solver preflight deficit.
-- `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md` — accepted Change Request for replacing the remaining raw-search-shaped solver strategy with an engine-backed canonical state-space solver plus construction-ledger planner.
-- `docs/handoff/HANDOFF-0004-plan-0004-cr-0004.md` — restart package after CR-0004.
-- `docs/handoff/HANDOFF-0005-plan-0004-solution-evidence.md` — restart package for the Task 5 solution-evidence block.
-- `docs/handoff/HANDOFF-0006-stack-stability-resource-validation.md` — restart package for resuming PLAN-0004 after accepted CR-0006.
-- `tests/fixtures/level_resource_requirements.json` — CR-0006 resource manifest for levels 6-20.
-- `tests/fixtures/level_solver_expectations.json` — CR-0007 solver expectations, budgets, and current-level-13 diagnostic requirements.
-- `tests/fixtures/level_solutions.json` — partial solution manifest covering levels 1-10 only.
-- `tests/js/solver.test.js` — CR-0007 solver/analyzer assertions.
-- `tests/js/level-solutions.test.js` — solution replay harness; currently fails coverage until levels 11-20 are added.
-- `tools/solve-levels.mjs` — CR-0007 no-dependency deterministic solver/analyzer CLI; CR-0009 layered reporting fields and macro helper exports added, but Level 13 macro solving remains incomplete.
+- `docs/change-requests/CR-0011-trace-informed-endgame-solver-reset.md` — accepted Change Request for trace-informed endgame solver reset and strategic trace-to-solver feedback.
+- `docs/handoff/HANDOFF-0008-plan-0004-cr-0010-solver.md` — restart package for the remaining CR-0010 solver/solution-evidence work.
 - `.superpowers/brainstorm/` — local visual brainstorming artifacts; not routine implementation input and should not be committed unless explicitly requested.
 
 ## Known Deviations from PLAN-0002 (carried forward)
@@ -271,10 +268,14 @@ New (untracked):
 
 After PLAN-0004 automated checks pass, the project owner still needs to review expanded levels 6-20 for difficulty curve, scaffold feel, visual legibility, and product fit.
 
+### Trace-capture A2 checkpoint may be needed
+
+After Task 4F, if no replay-valid `tests/fixtures/manual_traces/level_17_trace.json` exists, the project owner needs to record level 17 through the local dev trace recorder and provide the exported JSON before Task 4G analyzer validation can complete.
+
 ## Next Action
 
-Resume `PLAN-0004` implementation at Task 4C/4D for CR-0010 solver expectations/tests and the engine-backed construction-ledger solver. Stop if benchmark level 10, 13, or 14 cannot return `SOLVED` with replayable raw actions under the accepted plan.
+Resume `PLAN-0004` implementation from Task 4F: trace recorder UI and replay tests. Continue through Task 4G and Task 4H only while the plan's automated gates pass and no A2/A3 stop condition is reached.
 
 ## Last Updated
 
-2026-06-11
+2026-06-12

@@ -5,24 +5,25 @@ Approval Class: A2
 Maturity: M2
 Owner: Unassigned
 Created: 2026-06-11
-Updated: 2026-06-11
+Updated: 2026-06-12
 Related plan: `docs/plans/PLAN-0004-level-expansion-pipeline.md`
 Related ADRs: `docs/adr/ADR-0000-architecture-direction.md`
-Related Change Requests: `docs/change-requests/CR-0004-level-1-support-geometry-fix.md`, `docs/change-requests/CR-0005-solution-evidence-capture.md`, `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md`, `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md`, `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md`, `docs/change-requests/CR-0009-physics-certified-macro-solver.md`, `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md`
+Related Change Requests: `docs/change-requests/CR-0004-level-1-support-geometry-fix.md`, `docs/change-requests/CR-0005-solution-evidence-capture.md`, `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md`, `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md`, `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md`, `docs/change-requests/CR-0009-physics-certified-macro-solver.md`, `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md`, `docs/change-requests/CR-0011-trace-informed-endgame-solver-reset.md`
 
 ## Context
 
-- Source docs: `docs/project-charter.md`, `docs/roadmap.md`, `docs/glossary.md`, `docs/repo-map.md`, `docs/status/CURRENT_STATE.md`, `docs/adr/ADR-0000-architecture-direction.md`, `SPEC-0002`, `SPEC-0003`, `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md`, `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md`, `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md`, `docs/change-requests/CR-0009-physics-certified-macro-solver.md`, `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md`, and `docs/intake/candidate_levels_6_20.json`.
+- Source docs: `docs/project-charter.md`, `docs/roadmap.md`, `docs/glossary.md`, `docs/repo-map.md`, `docs/status/CURRENT_STATE.md`, `docs/adr/ADR-0000-architecture-direction.md`, `SPEC-0002`, `SPEC-0003`, `docs/change-requests/CR-0006-stack-stability-and-level-resource-validation.md`, `docs/change-requests/CR-0007-deterministic-solver-and-design-analyzer.md`, `docs/change-requests/CR-0008-level-13-solver-deficit-redesign.md`, `docs/change-requests/CR-0009-physics-certified-macro-solver.md`, `docs/change-requests/CR-0010-construction-ledger-solver-remediation.md`, `docs/change-requests/CR-0011-trace-informed-endgame-solver-reset.md`, and `docs/intake/candidate_levels_6_20.json`.
 - Current evidence: commit `96545e9` contains the first playable UI, backend level APIs, first-five level data, CR-0002, and CR-0003 level redesign. The repo is on branch `codex/application-scaffold`.
-- Current evidence from `docs/status/CURRENT_STATE.md`: PLAN-0004 implementation has partial local worktree changes expanding canonical level data to levels 1-20, adding candidate/resource validation, and adding partial solution replay coverage for levels 1-10.
-- Current evidence: `tests/js/run-tests.mjs` exercises engine and physics behavior with no frontend dependencies; it currently fails solution coverage because levels 11-20 are not yet represented in `tests/fixtures/level_solutions.json`.
+- Current evidence from `docs/status/CURRENT_STATE.md`: PLAN-0004 implementation has partial local worktree changes expanding canonical level data to levels 1-20, adding candidate/resource validation, and adding partial solution replay coverage for levels 1-15.
+- Current evidence: `tests/js/run-tests.mjs` exercises engine and physics behavior with no frontend dependencies; it currently fails solution coverage because levels 16-20 are not yet represented in `tests/fixtures/level_solutions.json`.
 - Current evidence: `docs/intake/candidate_levels_6_20.json` contains candidate definitions for IDs 6-20, with variable board sizes from 16x9 through 34x17 and block counts from 4 through 17. These candidates are intake source material for this spec, not accepted production data and not a runtime input.
-- Current gate: the first playable A2 human UX/product checkpoint was accepted by the project owner on 2026-06-11. `PLAN-0004` implementation has started and is currently stopped at automated solution evidence/tooling for levels 11-20, not at manual solvability.
+- Current gate: the first playable A2 human UX/product checkpoint was accepted by the project owner on 2026-06-11. `PLAN-0004` implementation has started and is currently stopped at automated solution evidence/tooling for levels 16-20, not at manual solvability.
 - Current evidence from manual playtesting under CR-0006: stacked lower blocks must not be pickup-eligible while another block rests directly on top of them; pre-CR-0008 level 13 needed more available blocks; and levels 6-20 need deterministic available-versus-needed block reporting before solution capture.
 - Current evidence from CR-0007 planning: deterministic resource rows are too weak by themselves because reusable temporary scaffolds and order-sensitive stockpile access affect solvability. PLAN-0004 needs no-dependency solver tooling that can fail hard preflight cases quickly, prove at least one valid completion through accepted mechanics, and produce actionable design recommendations.
 - Current evidence from CR-0008: level 13 has been revised by adding exactly three supported, reachable lower-yard blocks while preserving the Double Bench structure. The current row 12 is `#PBBBBBB.B.B.B.B.B.B.B..#`, yielding `availableBlocks = 15`, `requiredBlocks = 12`, and `surplusBlocks = 3` for the resource manifest gate.
-- Current evidence from project-owner playtesting: all current levels 1-20 are confirmed solvable by manual play under the accepted mechanics. Current level 13 was completed in roughly 230 moves and is a representative construction-heavy benchmark. The existing raw-action solver still fails to produce replayable level 13 solution evidence within the accepted `1000000` state budget, which is a solver architecture gap in the future-facing validation/design tool rather than a current-level solvability question.
+- Current evidence from project-owner playtesting: all current levels 1-20 are confirmed solvable by manual play under the accepted mechanics. Current level 13 was completed in roughly 230 moves and is a representative construction-heavy benchmark. Current implementation work now solves level 13 with replayable raw actions, so remaining solver failures are tool capability gaps, not current-level solvability questions.
 - Current evidence from CR-0010: the solver must be treated as deterministic board-state transformation, not ordinary pathfinding. It must use the existing engine transition contract as the reusable base, canonicalize interchangeable block positions, use a construction ledger for subgoal planning, and prove more than level 13 so the tool is useful for future level design.
+- Current evidence from CR-0011: current solver work solves levels 10, 13, 14, and 16, and has copied solver-produced replay actions for levels 11-15, but levels 17-20 remain `UNPROVEN_WITHIN_LIMIT`. The accepted reset requires dev-facing manual trace capture, replay validation, strategic trace macro analysis, trace-to-solver feedback recommendations, anti-overfit rules, region-logistics planning, and level 17 as the first endgame solver benchmark.
 - Why this slice next: the roadmap names level expansion as the next candidate after first-five validation, and the project charter preserves a path toward a 100-level target after the first five are playable.
 
 ## Problem
@@ -36,6 +37,8 @@ CR-0007 adds a second required correction before automated solution evidence and
 CR-0008 resolves the hard level 13 block deficit by adding three supported reachable blocks. CR-0009 then shifts the remaining work from level design to solver design: current levels are manually confirmed solvable, so PLAN-0004 needs a physics-certified macro construction solver that can reproduce known-solvable construction examples and provide actionable validation/design feedback for future levels.
 
 CR-0010 corrects the remaining solver strategy: the tool must not solve only by pathfinding from player to goal, and it must not prove only level 13 with one-off assumptions. It must use the existing game engine as the authoritative transition system, search canonical whole-board states, plan construction with a ledger, and pass a small representative benchmark set that includes level 13 plus additional current construction levels.
+
+CR-0011 corrects the endgame solver gap: levels 17-20 require logistics behavior that is broader than local scaffold construction, including region-to-region stockpile transfer, staging before final construction, temporary scaffold recovery, and backward planning from goal requirements. Manual traces may provide replay-certified evidence and solver-facing gap analysis, but they must not become hidden solver inputs or chronological action scripts.
 
 ## Goals
 
@@ -57,9 +60,15 @@ CR-0010 corrects the remaining solver strategy: the tool must not solve only by 
 - Add behavior and performance gates so simple levels solve quickly and the solver cannot pass as an unguided brute-force walker.
 - Use current canonical level 13, after the CR-0008 15-block revision, as the first required known-solvable benchmark that must return `SOLVED` with a replayable raw action list, compact default reporting, and debug-trace construction-ledger diagnostics.
 - Add current canonical levels 10 and 14 as additional required solver generalization benchmarks. These levels represent stockpile/staging and vertical scaffold construction beyond level 13.
+- Preserve current canonical level 16 as a solved construction-ledger benchmark after CR-0011 changes.
+- Add current canonical level 17 as the first required endgame logistics benchmark. Level 17 must return `SOLVED` with replayable raw actions without reading manual trace exports.
 - Replace raw-action-first level 13 search with an engine-backed canonical state-space solver guided by a construction ledger. The solver must reason in scaffold-building goals while committing only engine-replayed legal actions.
 - Canonicalize solver states from the whole board: player row/col, facing, carried-block state, sorted uncarried block positions, and level status. Blocks are interchangeable for solver state keys.
 - Prevent duplicate and substantially equivalent failed solver attempts from being retried without new progress evidence.
+- Add dev-facing trace capture that lets a project owner press Record, manually solve a level, and receive replay-valid trace JSON when the level completes.
+- Add strategic trace macro analysis that decodes replay-valid human traces into solver-facing planner gaps without requiring the solver to imitate human move order.
+- Add trace-to-solver feedback recommendations that identify bad solver behavior, the generic solver operator/invariant/scoring rule needed to replace it, and the regression test evidence required before accepting the change.
+- Add region-logistics planning so the solver reasons backward from goal/scaffold requirements to stockpile, staging, transfer, temporary-access, recovery, and final-build readiness needs before certifying a forward engine-action replay.
 - Preserve replay-inspection and design-analysis output so solved levels can still reveal unintended shortcuts, ignored stockpiles, suspiciously short completions, or weaker-than-intended scaffold use.
 - Keep the level expansion path dependency-light and compatible with the existing FastAPI and vanilla JavaScript architecture.
 - Keep API route shapes and frontend gameplay mechanics unchanged.
@@ -75,7 +84,9 @@ CR-0010 corrects the remaining solver strategy: the tool must not solve only by 
 - Reworking accepted first-playable mechanics beyond the CR-0006 stack-stability pickup rule.
 - Using `docs/intake/PROJECT_OVERVIEW_RAW.md` or `.superpowers/brainstorm/` artifacts as routine implementation inputs.
 - Serving `docs/intake/candidate_levels_6_20.json` directly at runtime.
-- A production/runtime solver, exhaustive formal proof, dependency-backed pathfinding engine, PDDL planner, or external solver package. CR-0007, CR-0009, and CR-0010 permit local no-dependency solver/analyzer tooling for planning, validity evidence, construction-ledger diagnostics, and design recommendations; JS replay remains the completion proof.
+- A production/runtime solver, exhaustive formal proof, dependency-backed pathfinding engine, PDDL planner, or external solver package. CR-0007, CR-0009, CR-0010, and CR-0011 permit local no-dependency solver/analyzer tooling for planning, validity evidence, trace diagnostics, construction-ledger diagnostics, and design recommendations; JS replay remains the completion proof.
+- Solver validity that reads manual trace exports as solution hints.
+- Per-level raw action scripts, board mutations, trace-specific shortcuts, or chronological human move-order imitation inside `tools/solve-levels.mjs`.
 
 ## Users / actors
 
@@ -84,6 +95,7 @@ CR-0010 corrects the remaining solver strategy: the tool must not solve only by 
 - Frontend app: loads metadata and selected level details through existing API routes.
 - Backend API: validates and serves the expanded level data.
 - Local solver/analyzer tooling: validates future level candidates, reproduces known-solvable benchmark levels, reports design metrics, and proposes redesign recommendations without mutating level data.
+- Manual trace recorder: local dev-facing browser affordance that captures a project-owner playthrough as replay evidence and diagnostic source material.
 - Agent/developer: runs validation, API tests, JS tests, and solution evidence checks.
 - Project owner: reviews difficulty curve, clarity, and product feel before accepting the expanded level batch.
 
@@ -97,9 +109,14 @@ CR-0010 corrects the remaining solver strategy: the tool must not solve only by 
 - Solver behavior: local tooling searches deterministic whole-board states, not player-to-goal pathfinding alone. It must use `createInitialState(...)` and `dispatchGameAction(...)` rather than reimplementing divergent gameplay rules.
 - Canonical state behavior: after every legal raw action, solver state keys normalize the engine-returned gravity-settled state by player row/col, facing, carried-block presence, sorted uncarried block positions, and level status. Block IDs from the engine are not part of solver equivalence because blocks are interchangeable for search.
 - Construction-ledger behavior: local tooling may propose scaffold targets, staging cells, work platforms, recoverable temporary blocks, reserved stockpile capacity, and final approach structures. A ledger or macro may guide search, but accepted state changes can only come from raw action replay through `dispatchGameAction(...)`.
+- Region-logistics behavior: local tooling must reason about platform/yard regions, stockpiles per region, block transfers, temporary access scaffolds, recoverability, and final-build readiness. The solver must plan from goal/scaffold requirements backward to resource and staging needs, then certify the resulting plan forward through engine actions.
 - Solver output behavior: solver/analyzer commands print human-copyable solution candidates, diagnostics, metrics, and recommendations; they must not auto-write `backend/app/data/levels.json`, `docs/intake/candidate_levels_6_20.json`, or `tests/fixtures/level_solutions.json`.
 - Level 13 diagnostic behavior: when run against current canonical level 13 after the accepted CR-0008 15-block revision, solver validity must return `SOLVED` with a replayable raw action list. `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, `UNSOLVABLE_EXHAUSTED`, and raw-search-only failure are not acceptable solver acceptance evidence because all current levels are manually confirmed solvable and the tool must work on known-solvable construction puzzles before it is trusted for future levels.
 - Additional benchmark behavior: solver validity for current canonical levels 10 and 14 must also return `SOLVED` with replayable raw actions. These levels prove the solver architecture generalizes beyond the first Level 13 gate.
+- Endgame benchmark behavior: solver validity for current canonical level 16 must remain `SOLVED`, and current canonical level 17 must return `SOLVED` with replayable raw actions without reading manual trace exports. Levels 18-20 may return `SOLVED` or precise planner-gap diagnostics until a later accepted plan or Change Request makes them blocking.
+- Trace capture behavior: a dev-facing recorder lets a tester start recording, play normally, and auto-stop when `state.status === "completed"`. The trace captures only valid forward gameplay actions. `undo`, `reset`, or level change invalidates and stops recording. On completion, the UI attempts clipboard copy and provides visible selectable JSON plus Copy/Download fallback when clipboard copy fails.
+- Trace analyzer behavior: trace analysis first replays exported actions through `createInitialState(...)` and `dispatchGameAction(...)`. Only replay-valid traces may produce solver-facing recommendations.
+- Trace-to-solver behavior: trace-derived recommendations are strategic and order-agnostic. They may use chronological actions to prove legality and identify phases, but solver-facing output must describe resource transfers, region readiness checks, scaffold dependencies, recovery requirements, missing planner capability, and a proposed generic operator/invariant/scoring rule. The default validity solver must not consume trace exports during solver runs.
 - Design-analysis behavior: true irreversible dead ends are valid puzzle-design signals, not automatic defects. Analyzer recommendations are advisory and require normal Change Request/spec/plan control before geometry changes are applied.
 - System responsibilities: backend validates and serves levels 1-20; frontend continues to derive API URLs and input mappings from `shared/app_contract.json`; automated checks verify level schema, API compatibility, and engine-level solution traces.
 - Explicitly unchanged behavior: API route names, response envelope shapes, shared tile symbols, action names, keyboard bindings, localStorage progress format, and frontend-owned gameplay state remain unchanged unless a later accepted spec or Change Request says otherwise.
@@ -116,10 +133,17 @@ CR-0010 corrects the remaining solver strategy: the tool must not solve only by 
   - `tests/js/run-tests.mjs`
   - `tests/js/level-solutions.test.js`
   - `tests/js/solver.test.js`
+  - `tests/js/trace-recorder.test.js`
   - `tests/fixtures/level_solutions.json`
   - `tests/fixtures/level_resource_requirements.json`
   - `tests/fixtures/level_solver_expectations.json`
+  - `tests/fixtures/manual_traces/*.json` when trace fixtures are needed for replay/analyzer tests
   - `tools/solve-levels.mjs`
+  - `frontend/js/trace-recorder.js` or an equivalent focused frontend trace recorder module
+  - `frontend/js/app.js`
+  - `frontend/js/ui.js`
+  - `frontend/index.html`
+  - `frontend/style.css`
   - `docs/repo-map.md`
   - `docs/status/CURRENT_STATE.md`
 - Public backend functions remain:
@@ -141,6 +165,7 @@ CR-0010 corrects the remaining solver strategy: the tool must not solve only by 
 - `docs/intake/candidate_levels_6_20.json` is an input to planning and implementation only. It must not be imported, fetched, bundled, or served by backend or frontend runtime code.
 - Resource-analysis fixtures are test/tool inputs only. They must not be surfaced in API level responses.
 - Solver/analyzer outputs are test/tool outputs only. They must not be surfaced in API level responses or browser runtime state.
+- Manual trace exports are local development evidence only. They must not be served through backend API level responses, loaded by default solver validity runs, or stored automatically in browser progress data.
 
 ### Level Data Contract
 
@@ -264,6 +289,7 @@ node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --all --max-states 1000000
 node tools/solve-levels.mjs --mode analyze --level 13 --max-states 2000000
 node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tools/solve-levels.mjs --mode analyze-trace --level 17 --trace tests/fixtures/manual_traces/level_17_trace.json
 ```
 
 Stable solver statuses:
@@ -397,9 +423,22 @@ Current canonical levels 10 and 14 are required solver generalization benchmarks
 | 10 | Introduces shelf stockpile and staging behavior beyond tutorial levels. | `SOLVED` with replayable raw actions. |
 | 14 | Represents vertical scaffold construction beyond the Level 13 double-bench shape. | `SOLVED` with replayable raw actions. |
 
-Level 13 remains the first blocking benchmark because it is currently solver-unproven, but it is not sufficient evidence by itself. Levels 10 and 14 must pass with the same engine-backed canonical state-space solver, construction-ledger rules, and replay proof. A solver that special-cases Level 13 or emits hardcoded Level 13 actions without passing the additional benchmark levels fails this spec.
+Level 13 remains the first required construction-ledger benchmark and must continue to pass, but it is not sufficient evidence by itself. Levels 10 and 14 must pass with the same engine-backed canonical state-space solver, construction-ledger rules, and replay proof. A solver that special-cases Level 13 or emits hardcoded Level 13 actions without passing the additional benchmark levels fails this spec.
 
 If level 10 or 14 returns `FAILED_PREFLIGHT`, `UNPROVEN_WITHIN_LIMIT`, or `UNSOLVABLE_EXHAUSTED`, implementation stops for solver-plan revision or a solver-focused Change Request. Because the project owner has confirmed all current levels are solvable, these outcomes are not automatic geometry-redesign evidence.
+
+### Endgame Logistics Benchmark Boundary
+
+CR-0011 adds level 17 as the first endgame logistics benchmark while preserving the already solved level 16 result.
+
+| Level | Reason included | Required final validity outcome |
+|---:|---|---|
+| 16 | Confirms the CR-0010 construction-ledger solver still handles a raised worksite after trace/logistics changes. | `SOLVED` with replayable raw actions. |
+| 17 | First endgame benchmark for split-yard stockpile transfer, staging before final construction, and final-build readiness. | `SOLVED` with replayable raw actions, without reading manual trace exports. |
+
+The default validity solver must not read trace exports for level 17 or any other level. A level 17 solution that depends on a manual trace file, hidden action list, per-level board mutation, or chronological trace imitation fails this spec.
+
+For current canonical levels 18-20, CR-0011 requires either `SOLVED` with replayable raw actions or precise planner-gap diagnostics that name the failed strategic capability. Valid non-solved diagnostics for levels 18-20 must map to one of the accepted failure categories and must include at least one concrete solver-improvement or future-level design lever.
 
 Goal-directed planner requirements:
 
@@ -425,6 +464,7 @@ Goal-directed planner requirements:
 
 Validity solver requirements:
 
+- Plan from the big picture inward: derive final goal approach and final scaffold requirements first, work backward to stockpile, staging, transfer, temporary-access, recovery, and final-build readiness needs, then certify the resulting plan forward through engine actions.
 - Explore macro construction states with a deterministic priority queue guided by planner candidates, not raw action-order depth-first wandering.
 - Use BFS or BFS-equivalent raw-action state-space search only inside the tactical executor for the current macro step, bounded by the macro's preconditions, target, reachable region, and local budget.
 - Do not assign stable solver identities to blocks for state equivalence. Engine-internal IDs may exist in runtime state objects, but solver deduplication treats blocks as interchangeable.
@@ -445,6 +485,7 @@ Validity solver requirements:
 - A reported `SOLVED` action list must replay through `dispatchGameAction(...)` and end with `state.status === "completed"`.
 - A reported `SOLVED` macro plan must flatten to exactly the same raw `actions` list that passes replay; macro-only success is not valid solution evidence.
 - A reported `SOLVED` result for levels 10, 13, or 14 must come from the shared solver architecture, not from per-level hardcoded action lists or per-level hardcoded board mutations.
+- A reported `SOLVED` result for level 17 must come from strategic region-logistics planning and engine replay, not from reading trace exports or reproducing a human trace's chronological action order.
 
 Failure-signature requirements:
 
@@ -488,6 +529,135 @@ Design analyzer requirements:
   - unintended bypass evidence when a level can skip an intended platform or stockpile.
 - Produce actionable recommendations with `type`, `priority`, `reason`, and `action`.
 - Recommendation actions must name concrete design levers, such as adding reachable blocks, removing surplus blocks, moving a stockpile, raising or lowering a shelf, adding or removing terrain that forces platform order, making block reuse necessary, reducing an unintended bypass, or rerunning validity after an edit.
+
+### Manual Trace Capture Contract
+
+Manual trace capture is a local development aid for known-solvable levels. It is not runtime gameplay, not a backend API, and not a solver input.
+
+Trace recorder behavior:
+
+- A dev-facing recorder is available from the browser play UI.
+- The tester presses `Record`, plays the selected level normally, and recording stops automatically when `state.status === "completed"`.
+- The recorder captures only successful forward gameplay actions from the accepted action set: `moveLeft`, `moveRight`, `jump`, and `interact`.
+- A recorded action is appended only after `dispatchGameAction(...)` returns a non-invalid replay-relevant state transition. Facing-only turns are replay-relevant and must be recorded even when they do not increment moves.
+- Invalid actions, `undo`, `reset`, and level changes invalidate the active recording and stop capture.
+- A completed, non-invalidated recording attempts to copy JSON to the clipboard.
+- If clipboard copy fails, the UI keeps the JSON visible/selectable and provides Copy and Download controls.
+- The recorder must not write trace files automatically, send trace data over the network, store traces in localStorage progress data, or mutate solution fixtures.
+
+Trace export shape:
+
+```json
+{
+  "version": "0.1.0",
+  "contractVersion": "0.1.0",
+  "source": "manual-trace",
+  "levelId": 17,
+  "completed": true,
+  "invalidated": false,
+  "actions": ["moveRight", "interact"],
+  "summary": {
+    "actionCount": 2,
+    "pickups": 1,
+    "placements": 0
+  }
+}
+```
+
+Trace export rules:
+
+- `levelId` refers to the selected canonical level.
+- `completed` must be `true` and `invalidated` must be `false` before the trace can be used as replay evidence or analyzer input.
+- `actions` is a non-empty array of accepted forward gameplay actions.
+- `summary.actionCount` equals `actions.length`.
+- `summary.pickups` and `summary.placements` count successful `interact` actions where the replay state changes from not carrying to carrying, or carrying to not carrying.
+- A trace export is trusted only after replay from `createInitialState(level, contract)` through `dispatchGameAction(...)` reaches `state.status === "completed"` without invalid actions.
+- Trace exports may be committed under `tests/fixtures/manual_traces/` only when a plan names that fixture and uses it for replay/analyzer tests. Solver validity mode must not read that directory.
+
+### Trace Macro Analyzer Contract
+
+The trace analyzer is a no-dependency local tool mode that decodes replay-valid manual traces into compact, strategic evidence for improving the solver.
+
+CLI contract:
+
+```bash
+node tools/solve-levels.mjs --mode analyze-trace --level 17 --trace tests/fixtures/manual_traces/level_17_trace.json
+```
+
+Top-level output shape:
+
+```json
+{
+  "version": "0.1.0",
+  "mode": "analyze-trace",
+  "levelId": 17,
+  "status": "ANALYZED",
+  "traceReplay": {
+    "valid": true,
+    "completed": true,
+    "invalidStep": null
+  },
+  "observedPhaseSequence": ["collect", "stage", "transfer_between_regions", "build_final_scaffold", "complete_goal_approach"],
+  "regionTransfers": [
+    { "fromRegion": "lower-yard", "toRegion": "upper-worksite", "blocksMoved": 3 }
+  ],
+  "temporaryScaffolds": [],
+  "recoveryPoints": [],
+  "finalScaffoldBuildOrder": [{ "row": 10, "col": 18 }],
+  "solverFacingRecommendations": []
+}
+```
+
+Trace phase vocabulary is fixed to:
+
+- `collect`;
+- `stage`;
+- `build_temporary_access`;
+- `climb_to_platform`;
+- `recover_temporary_blocks`;
+- `transfer_between_regions`;
+- `build_final_scaffold`;
+- `complete_goal_approach`.
+
+Trace analyzer requirements:
+
+- Replay the trace before analysis. If replay fails, output `status: "FAILED_PREFLIGHT"`, `reason: "TRACE_REPLAY_INVALID"`, `traceReplay.valid: false`, and the first invalid step/action.
+- Decode chronological actions into strategic phases; do not expose the raw action order as the solver-facing recommendation.
+- Detect region transfers by comparing block pickup and placement regions, not by assuming a trace-specific level script.
+- Detect temporary scaffold use and recovery from replay state deltas.
+- Detect final scaffold build order as a clue for planner scoring, not as a mandatory action script.
+- Keep default output compact. It must not include full raw search trees, large rejected-state lists, raw state keys, or a per-action replay log.
+- Detailed per-action replay may be added only under a future debug flag named by the implementation plan.
+
+Trace-to-solver recommendation shape:
+
+```json
+{
+  "type": "add_region_transfer_goal",
+  "priority": "high",
+  "reason": "The replay-valid trace staged blocks in an upper worksite before final construction.",
+  "action": "Add a generic transfer goal from lower-yard stockpile to upper-worksite readiness before final climb.",
+  "observedPhaseSequence": ["collect", "stage", "transfer_between_regions"],
+  "requiredRegionTransfers": [
+    { "fromRegion": "lower-yard", "toRegion": "upper-worksite", "minBlocks": 3 }
+  ],
+  "temporaryScaffoldPattern": null,
+  "recoveryPoint": null,
+  "finalScaffoldBuildOrderClue": null,
+  "missingPlannerCapability": "region_transfer_goal",
+  "proposedGenericOperatorOrInvariant": "Do not start final climb until target-region staged block count satisfies final-build readiness.",
+  "replacedBadBehavior": "Solver climbs before staging enough blocks and strands the lower-yard stockpile.",
+  "regressionTestExpectation": "Validity mode no longer returns the same stranded-stockpile failure without reading trace exports."
+}
+```
+
+Trace-to-solver requirements:
+
+- Every `solverFacingRecommendations[]` entry has `type`, `priority`, `reason`, `action`, `observedPhaseSequence`, `requiredRegionTransfers`, `temporaryScaffoldPattern`, `recoveryPoint`, `finalScaffoldBuildOrderClue`, `missingPlannerCapability`, `proposedGenericOperatorOrInvariant`, `replacedBadBehavior`, and `regressionTestExpectation`.
+- Recommendations must be strategic and order-agnostic. They may name resource transfers, region readiness checks, scaffold dependencies, recovery requirements, and final-build readiness; they must not require the solver to reproduce the human action order.
+- A trace-motivated solver change is accepted only when a regression test names the replaced bad behavior and proves validity mode no longer repeats it without reading trace exports.
+- Trace output is development evidence for generic solver operators, invariants, and scoring rules; it is not a hidden level solution source.
+- The default validity solver must not accept `--trace`, read `tests/fixtures/manual_traces/`, or load trace exports by convention.
 
 ### Solver Output Contract
 
@@ -601,6 +771,11 @@ Validation failures must use these codes where applicable:
 | `LEVEL_SOLVER_LEDGER_INVALID` | A construction ledger omits required fields, consumes a reserved block early, marks an unrecoverable temporary block recoverable, or claims progress that replay does not commit. |
 | `LEVEL_SOLVER_MACRO_INVALID` | A macro is accepted without valid replay, creates a floating block, teleports a block, picks up a supporting block, mismatches its promised state, or omits failed-macro diagnostics. |
 | `LEVEL_SOLVER_REPEATED_FAILURE_UNPRUNED` | Solver output shows equivalent or dominated failed attempts were retried instead of pruned. |
+| `LEVEL_TRACE_MANIFEST_INVALID` | A manual trace export has the wrong version, level ID, completion/invalidated flags, action values, summary counts, or shape. |
+| `LEVEL_TRACE_REPLAY_INVALID` | Replaying a manual trace through the engine returns an invalid action or does not complete the target level. |
+| `LEVEL_TRACE_FEEDBACK_INVALID` | Trace analyzer output lacks strategic/order-agnostic solver-facing recommendations, missing planner capability, replaced bad behavior, or regression-test expectation. |
+| `LEVEL_SOLVER_TRACE_OVERFIT` | Validity mode reads trace exports, accepts trace-specific shortcuts, reproduces chronological trace scripts as its solver strategy, or passes only when a trace is present. |
+| `LEVEL_SOLVER_ENDGAME_BENCHMARK_UNPROVEN` | Current canonical level 17 returns anything other than `SOLVED` with replayable raw actions from solver validity mode without trace input. |
 | `LEVEL_SOLVER_OUTPUT_INVALID` | Solver output shape, replay actions, diagnostics, metrics, or recommendations do not match the contract. |
 
 Tools may add context such as `levelId`, `row`, `col`, `step`, `action`, `status`, `reason`, `candidatePlanId`, `deficitBlocks`, and `prunedSimilarFailures`, but the stable code and human-readable message are required.
@@ -684,6 +859,13 @@ Level expansion must use the accepted runtime behavior from `SPEC-0003`:
 - FR-28: Add construction-ledger tracking for final scaffold cells, staging cells, reserved blocks, temporary cells, committed cells, work platforms, required carry-up blocks, and risk flags.
 - FR-29: Add replay-inspection output for solved levels, including solution length, queue/frontier metric, and optional debug-only state-by-state text replay.
 - FR-30: Add design-analysis fields that identify stockpiles used or ignored, picked-up block count, temporary block recovery, suspiciously short routes, and final scaffold blocks used versus the intended construction lower bound.
+- FR-31: Add dev-facing manual trace capture that records accepted forward gameplay actions, auto-stops on completion, invalidates on undo/reset/level change, and produces copyable/downloadable JSON without mutating fixtures or runtime progress.
+- FR-32: Add replay validation for manual trace exports before a trace can be trusted as evidence, analyzed, or converted by a human/agent into solution fixture data.
+- FR-33: Add trace macro analysis that decodes replay-valid traces into compact strategic phases, region transfers, temporary scaffold use/recovery, final scaffold build-order clues, and solver-facing recommendations.
+- FR-34: Add trace-to-solver feedback recommendations that name the bad solver behavior replaced, decoded trace pattern, missing planner capability, proposed generic operator/invariant/scoring rule, and regression-test expectation.
+- FR-35: Add region-logistics planning that works backward from final goal/scaffold requirements to stockpile, staging, transfer, temporary-access, recovery, and final-build readiness needs before certifying forward replay.
+- FR-36: Preserve current canonical level 16 as `SOLVED` and add current canonical level 17 as the first endgame benchmark that must return `SOLVED` with replayable raw actions without reading manual trace exports.
+- FR-37: Prevent trace overfit: validity mode must not accept trace inputs, read manual trace fixture directories, use per-level trace shortcuts, or reproduce chronological trace action order as its solver strategy.
 
 ### Non-functional
 
@@ -694,16 +876,18 @@ Level expansion must use the accepted runtime behavior from `SPEC-0003`:
 - Maintainability: solution evidence is machine-readable, versioned, and kept separate from served API level data.
 - Maintainability: resource requirements are machine-readable, versioned, deterministic, and kept separate from served API level data.
 - Maintainability: solver outputs are deterministic, versioned, and kept separate from served API level data.
+- Maintainability: manual trace exports and trace analyzer outputs are deterministic, versioned, local development artifacts kept separate from served API level data and browser progress data.
 - Maintainability: solver rejection diagnostics are stable enough for level authors to identify repeated bad plan shapes and actionable geometry changes.
 - Performance: level 1 must return `SOLVED` under 500 expanded states and under 1 second on the local development machine. Known solved tutorial levels 2-10 must return `SOLVED` within deterministic per-level budgets defined in the plan.
 - Performance: current levels 10, 13, and 14 must be solved by the engine-backed construction-ledger solver within deterministic budgets defined in the plan as known-solvable benchmarks; raw-action budget exhaustion is not a passing result for CR-0010.
+- Performance: current level 17 must be solved by the trace-informed region-logistics solver within a deterministic budget defined in the plan; trace replay analysis must remain fast enough for local developer feedback on recorded action lists.
 - UI resilience: large boards may scroll or scale within the existing play surface, but surrounding controls and status regions must remain usable on desktop and mobile-width layouts.
 
 ## Dependencies and approvals
 
 - Prerequisite specs/plans: accepted and completed `SPEC-0002`/`PLAN-0002` and `SPEC-0003`/`PLAN-0003`.
 - Prerequisite human gate: first-playable A2 UX/product checkpoint accepted for levels 1-5.
-- Existing files to read first during planning: this spec, `backend/app/data/levels.json`, `backend/app/services/level_service.py`, `tests/test_level_validation.py`, `tests/test_api.py`, `tests/js/run-tests.mjs`, `frontend/js/engine.js`, and `shared/app_contract.json`.
+- Existing files to read first during planning: this spec, `backend/app/data/levels.json`, `backend/app/services/level_service.py`, `tests/test_level_validation.py`, `tests/test_api.py`, `tests/js/run-tests.mjs`, `tests/js/solver.test.js`, `frontend/js/engine.js`, `frontend/js/app.js`, `frontend/js/ui.js`, and `shared/app_contract.json`.
 - Active intake source for this slice: `docs/intake/candidate_levels_6_20.json`. Read this file only for level-content transcription/validation; do not use raw intake overview files for routine planning or implementation.
 - Approval class: A2 because expanded level design and difficulty curve require human product judgment after automated checks pass.
 - Approval-required actions: any dependency addition, dependency installation, lockfile change, network-backed command, generator tool, solver dependency, frontend framework, build tool, deployment change, or CI change.
@@ -725,8 +909,11 @@ node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
 node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 16 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 17 --max-states 1000000
 node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
 node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
+node tools/solve-levels.mjs --mode analyze-trace --level 17 --trace tests/fixtures/manual_traces/level_17_trace.json
 node tests/js/run-tests.mjs
 git diff --check
 ```
@@ -739,10 +926,14 @@ Expected evidence:
 - Solver validity for level 1 reports `SOLVED`, expands fewer than 500 states, completes under 1 second locally, and emits replayable actions.
 - Solver validity for known solved levels 2-10 reports `SOLVED` within deterministic per-level budgets.
 - Solver validity for required benchmark levels 10, 13, and 14 reports `SOLVED` with replayable raw actions. Level 13 is the first blocking benchmark; levels 10 and 14 prove the same solver architecture generalizes to additional current construction levels.
+- Solver validity for level 16 remains `SOLVED` with replayable raw actions after trace/logistics changes.
+- Solver validity for level 17 reports `SOLVED` with replayable raw actions without accepting `--trace`, reading `tests/fixtures/manual_traces/`, loading a hidden action script, or reproducing chronological human move order as its strategy.
+- Solver validity for levels 18-20 either reports `SOLVED` with replayable raw actions or emits precise planner-gap diagnostics that map to accepted failure categories and include concrete solver-improvement or future-level design levers.
 - An under-resourced level 13 scenario or synthetic equivalent reports `FAILED_PREFLIGHT`, `reason="FINAL_SCAFFOLD_BLOCK_DEFICIT"`, and `statesExpanded=0` before search.
 - Current canonical level 13 after the CR-0008 15-block revision reports `SOLVED` as a known-solvable benchmark and emits a flattened replayable raw action list that completes through `dispatchGameAction(...)`; `--debug-trace` exposes the macro-plan steps that produced it.
 - If current canonical level 13 is not `SOLVED`, default solver output includes `phase`, `failedInvariant`, `failureCategory`, concise `cause`, capped `topRecommendations`, and compact summary metrics. This is a tool-readiness failure, not a current-level solvability failure.
 - If current canonical level 10 or 14 is not `SOLVED`, default solver output includes compact solver-improvement diagnostics and implementation stops before using the tool for future level validation.
+- If current canonical level 17 is not `SOLVED`, default solver output includes compact solver-improvement diagnostics that name the missing region-logistics capability; implementation stops before completing solution evidence.
 - Canonical-state tests prove block identity permutations collapse to one solver key, while player position, facing, carried-block presence, sorted uncarried block positions, and level status remain distinct.
 - Construction-ledger tests prove reserved blocks are not consumed early, temporary cells are recovered only when legal, committed cells are not disturbed, and dominated ledgers are pruned.
 - Solved benchmark outputs include `solutionLength`, `statesExpanded`, `maxQueueSize`, `actions`, and enough debug-only replay inspection to distinguish intended construction from a physics bug or unintended shortcut.
@@ -752,6 +943,13 @@ Expected evidence:
 - Solver output includes failure signatures for rejected candidates in `--debug-trace` and reports a positive `prunedSimilarFailures` count for a repeated-bad-plan fixture.
 - Analyzer output includes difficulty metrics, difficulty signals, and at least one actionable recommendation for a representative solved later level.
 - Analyzer output reports picked-up block count, stockpile regions touched or ignored, final scaffold cells built, temporary blocks used/recovered, suspiciously short route flag, and final scaffold blocks used versus intended construction lower bound.
+- Trace recorder tests prove recording starts empty for the selected level, appends successful forward actions only, auto-stops on completion, invalidates on undo/reset/level change, and exposes completed JSON through clipboard attempt plus visible/selectable fallback controls.
+- Trace replay tests prove a completed trace reaches `state.status === "completed"` through `dispatchGameAction(...)`, and invalid trace exports fail with `LEVEL_TRACE_REPLAY_INVALID`.
+- Trace analyzer output reports observed phase sequence, region transfers, temporary scaffold use/recovery, final scaffold build-order clues, and at least one solver-facing recommendation with missing planner capability, replaced bad solver behavior, proposed generic operator/invariant/scoring rule, and regression-test expectation.
+- Trace analyzer recommendations are strategic and order-agnostic: automated tests assert recommendations name region transfers, readiness checks, scaffold dependencies, or recovery requirements rather than a raw human move-order script.
+- Trace-motivated solver behavior changes include regression tests proving validity mode no longer repeats the replaced bad behavior without reading trace exports.
+- Solver overfit tests prove validity mode does not accept trace inputs, read manual trace fixture directories, or require a trace file to solve level 17.
+- Solver planning tests prove the solver derives final goal/scaffold requirements first, works backward to stockpile/staging/transfer/recovery/final-build readiness requirements, and then certifies a forward engine-action replay.
 - Re-running the same solver command twice produces the same status, phase, failure category, first action sequence when solved, summary metrics, and recommendation types.
 - Backend API tests prove list/detail routes handle levels 1-20 and preserve not-found behavior.
 - JS tests include level solution evidence and complete every level without invalid actions.
@@ -773,6 +971,8 @@ Expected evidence:
 - Confirm the difficulty curve does not rely on unexplained mechanics outside `SPEC-0003`.
 - Confirm levels 14-20 feel like construction/scaffold puzzles rather than simple path-following or single-block bridge puzzles.
 - Confirm automated solver evidence for benchmark levels 10, 13, and 14 matches accepted mechanics and does not contradict the existing manual completion evidence.
+- Confirm trace recorder UX is acceptable for local manual capture: pressing Record, playing, completion auto-stop, and JSON copy/fallback are clear enough for project-owner use.
+- Confirm trace analyzer recommendations are useful design/solver feedback rather than an overwhelming action log.
 - Confirm surplus blocks in other levels feel like purposeful alternatives or ambiguity rather than clutter.
 - Confirm larger boards remain legible and controllable on desktop and mobile-width layouts.
 
@@ -800,10 +1000,16 @@ Expected evidence:
   - Mitigation: require failure signatures, dominance pruning, and `prunedSimilarFailures` evidence.
 - Risk: current canonical benchmark levels can remain manually solvable but solver-unproven because the construction ledger or tactical executor is incomplete.
   - Mitigation: require physics-certified construction-ledger solving, compact default failure reporting, debug-trace failed-macro diagnostics, and `SOLVED` replay gates for levels 10, 13, and 14 before using the tool for future level validation.
+- Risk: endgame levels can remain manually solvable but solver-unproven because the solver lacks region-logistics planning.
+  - Mitigation: require level 17 as the first endgame benchmark, strategic backward planning from final goal requirements, trace-informed planner-gap diagnostics, and regression tests for replaced bad solver behavior.
 - Risk: macro solving can accidentally bypass game physics.
   - Mitigation: reject every macro that cannot be decomposed into legal engine actions and replayed through `dispatchGameAction(...)`.
 - Risk: the solver can overfit level 13.
   - Mitigation: require additional `SOLVED` benchmark gates for current canonical levels 10 and 14 using the same solver architecture, without per-level hardcoded action fixtures.
+- Risk: the solver can overfit a manual trace.
+  - Mitigation: prohibit validity mode from reading trace exports, require order-agnostic trace recommendations, and require level 17 to solve without trace input.
+- Risk: trace analysis can become too verbose to guide design.
+  - Mitigation: keep default trace analyzer output compact, require a small strategic phase vocabulary, and forbid full raw search trees or per-action logs in default output.
 - Risk: a separate local physics implementation can diverge from the browser game.
   - Mitigation: require `createInitialState(...)` and `dispatchGameAction(...)` as the transition authority for solver search, macro replay, and final proof.
 - Risk: difficulty metrics may be mistaken for product judgment.
@@ -818,7 +1024,15 @@ Expected evidence:
 - Solver level 1 validity cannot meet the under-500-state and under-1-second gate without changing scope.
 - Solver output is nondeterministic for the same input and options.
 - Current canonical benchmark level 10, 13, or 14 returns anything other than `SOLVED` with accepted construction-ledger evidence and replayable raw actions.
+- Current canonical benchmark level 16 regresses from `SOLVED` after trace/logistics changes.
+- Current canonical benchmark level 17 returns anything other than `SOLVED` with replayable raw actions from validity mode without trace input.
+- Current canonical levels 18-20 return non-solved output without precise planner-gap diagnostics and concrete solver-improvement or future-level design levers.
 - Solver output for an unsolved benchmark level lacks compact default failure reporting, actionable solver-redesign recommendations, or debug-trace failed-macro diagnostics.
+- Manual trace capture cannot produce replay-valid JSON for a completed level without dependency, network, backend API, or persistent storage changes.
+- Trace capture treats undo, reset, level changes, or invalid actions as valid solution evidence.
+- Trace analyzer recommendations are chronological move scripts rather than strategic region transfers, readiness checks, scaffold dependencies, or recovery requirements.
+- Validity mode accepts trace input, reads trace fixture directories, uses per-level trace shortcuts, or requires a trace file to solve level 17.
+- A trace-motivated solver behavior change lacks a regression test naming the replaced bad behavior and proving the solver no longer repeats it without trace input.
 - A macro step is accepted without engine replay, creates a floating block, teleports a block, picks up a supporting block, places into an invalid target, or mismatches its promised end state.
 - Solver state keys depend on engine-internal block IDs, omit player/facing/carry/status/block positions, or enqueue invalid actions as new states.
 - The construction ledger omits required fields, consumes a reserved block early, marks an unrecoverable temporary block recoverable, or claims progress that raw replay does not commit.
