@@ -1,71 +1,213 @@
 # Repo Map
 
-Status: Draft
-Last updated: YYYY-MM-DD
+Status: PLAN-0006 implemented locally; A2 static browser preview pending
+Maturity: M4
+Last updated: 2026-06-12
 
 ## Purpose
 
-Briefly describe the repository.
+This repository contains a local deterministic grid block puzzle game with a FastAPI backend, vanilla JavaScript frontend, shared contract, level validation tooling, replay fixtures, and controlled planning docs.
 
-## Main directories
+## Current top-level structure
 
-- `src/` or `app/`: application code.
-- `tests/`: tests.
-- `docs/`: specs, plans, ADRs, standards, worklogs.
-- `scripts/agent/`: deterministic helper scripts for agent workflow.
-- `.github/`: PR template and CI workflows.
-- `.githooks/`: local Git hooks.
-- `.codex/`, `.claude/`, `.cursor/`: tool-specific agent adapters.
+- `AGENTS.md`: required operating modes, change control, permission policy, and quality gates.
+- `docs/`: project charter, glossary, roadmap, specs, plans, ADRs, standards, worklogs, deployment notes, and intake material.
+- `docs/status/CURRENT_STATE.md`: active project dashboard for future session startup.
+- `docs/handoff/`: concise handoff notes for incomplete, interrupted, blocked, or complex work.
+- `docs/worklog/`: session notes and durable discoveries.
+- `scripts/agent/`: deterministic helper scripts for preflight, policy checks, seeding, and finalization.
+- `.githooks/`: local Git hooks. Do not bypass with `--no-verify` unless explicitly approved.
+- `.github/`: repository policy, pull request, and CI/dependency-review scaffold.
+- `.agents/`, `.codex/`, `.claude/`, `.cursor/`, `tooling/`: agent/tool adapters and helper configuration.
 
-## Main commands
+## Expected application structure
 
-Update these once the stack is chosen.
+The first implementation batch should create this skeleton before product behavior is implemented:
 
-```bash
-# install
-TBD
-
-# dev
-TBD
-
-# test
-TBD
-
-# lint
-TBD
-
-# typecheck
-TBD
-
-# build
-TBD
+```text
+backend/
+  app/
+    __init__.py
+    main.py
+    settings.py
+    schemas.py
+    middleware.py
+    services/
+      __init__.py
+      level_service.py
+      progress_service.py
+    data/
+      levels.json
+frontend/
+  index.html
+  style.css
+  js/
+    app.js
+    api.js
+    contract.js
+    engine.js
+    physics.js
+    renderer.js
+    input.js
+    runtime-config.js
+    storage.js
+    trace-dev.js
+    trace-recorder.js
+    ui.js
+shared/
+  app_contract.json
+  COMMUNICATION_CONTRACT.md
+tests/
+  test_api.py
+  test_level_validation.py
+  js/
+    engine.test.js
+    physics.test.js
+tools/
+  export_static_site.py
+  validate_levels.py
+  generate_levels.py
 ```
+
+`tools/generate_levels.py` is a future placeholder for level expansion after the first five levels are validated; it should not be implemented during the scaffold batch unless a later spec accepts it.
 
 ## Architectural boundaries
 
-- UI layer:
-- API layer:
-- Domain layer:
-- Persistence layer:
-- Integration layer:
+- Backend layer: FastAPI app responsible for static serving, public config, level metadata/detail APIs, validation, structured API errors, and optional local progress persistence.
+- Shared contract layer: JSON source of truth for API prefixes/routes, tile symbols, actions, keyboard bindings, storage keys, gameplay constants, and UI constants.
+- Frontend API layer: route construction and fetch wrappers derived from the shared contract.
+- Frontend engine layer: pure deterministic game state transitions, win detection, reset, and undo. It must not manipulate the DOM directly.
+- Frontend physics layer: collision, solid/empty checks, grounded checks, and gravity resolution.
+- Frontend renderer/UI layer: DOM/CSS grid rendering, HUD, controls, status messages, level selector, completion modal, responsive layout, and accessibility affordances.
+- Frontend storage layer: localStorage progress and settings.
+- Tooling layer: level validation and later level generation.
+- Static release layer: `tools/export_static_site.py` builds the Vercel-ready `dist/` artifact from frontend files, shared contract JSON, and canonical levels 1-50. The exporter removes dev-only trace UI/files, removes deployed undo controls, injects deployed runtime config, and emits static JSON under `dist/static-data/`.
 
-## Do not touch casually
+## Files future agents should read first
 
-- Auth/security:
-- Billing/payments:
-- Migrations:
-- Shared types/contracts:
-- Generated files:
-- CI/deployment:
+- `AGENTS.md`
+- `docs/repo-map.md`
+- `docs/status/CURRENT_STATE.md`
+- The active spec, plan, and batch listed in `docs/status/CURRENT_STATE.md`
+- Directly relevant source files for the active task
 
-## Common patterns
+## Files future agents should not casually modify
 
-- Error handling:
-- Logging:
-- Configuration:
-- Testing:
-- Dependency injection:
+- `docs/intake/PROJECT_OVERVIEW_RAW.md`: raw source material; do not rewrite during implementation.
+- `AGENTS.md`: repo operating policy; changes require explicit intent.
+- `.github/` and `.githooks/`: CI and hook behavior; approval may be required.
+- `shared/app_contract.json` once created: shared Python/JavaScript source of truth; changes should be spec-backed.
+- `backend/app/data/levels.json` once created: level schema and first-five content should stay validator-backed.
+- `.env`, secrets, key files, and local progress data: do not read or commit secrets/user data.
+- Lockfiles and dependency manifests: dependency policy applies.
 
-## Agent context notes
+## Current local verification commands
 
-Agents should read this file before broad codebase discovery. Keep it short and current.
+```bash
+git status --short
+bash scripts/agent/agent_preflight.sh
+bash -n scripts/agent/*.sh .githooks/*
+python3 -m py_compile scripts/agent/*.py .codex/hooks/*.py
+python3 -m json.tool shared/app_contract.json >/dev/null
+python3 -m json.tool backend/app/data/levels.json >/dev/null
+python3 -m json.tool package.json >/dev/null
+python3 -m json.tool package-lock.json >/dev/null
+python3 -m json.tool docs/intake/candidate_levels_6_20.json >/dev/null
+python3 -m json.tool docs/intake/block_builder_levels_20_30_rebuilt.json >/dev/null
+python3 -m json.tool tests/fixtures/level_resource_requirements.json >/dev/null
+python3 -m json.tool tests/fixtures/level_solutions.json >/dev/null
+.venv/bin/python tools/validate_levels.py
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json --resource-source tests/fixtures/level_resource_requirements.json
+.venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+.venv/bin/python -m pytest tests/test_static_export.py
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tools/solve-levels.mjs --mode analyze --level 18 --max-states 2000000
+node tools/solve-levels.mjs --mode validity --level 21 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 22 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 23 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 24 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 25 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 26 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 27 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 28 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 29 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 30 --max-states 1000000
+node tests/js/run-tests.mjs
+node -e "const p=require('./package.json'); if (p.scripts?.build !== 'python3 tools/export_static_site.py') throw new Error('missing build script')"
+python3 tools/export_static_site.py
+python3 -m json.tool dist/static-data/config.json >/dev/null
+python3 -m json.tool dist/static-data/levels.json >/dev/null
+```
+
+## Backend setup and run commands (current — BATCH-0002 complete)
+
+A3 dependency/network approval is required before running install commands.
+
+```bash
+# Install (run from repo root, use repo .venv only):
+.venv/bin/python -m pip install -e ".[dev]"
+
+# Validate level data:
+.venv/bin/python tools/validate_levels.py
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/candidate_levels_6_20.json
+.venv/bin/python tools/validate_levels.py --candidate-source docs/intake/block_builder_levels_20_30_rebuilt.json
+.venv/bin/python tools/validate_levels.py --resource-source tests/fixtures/level_resource_requirements.json
+
+# Run backend tests:
+.venv/bin/python -m pytest tests/test_api.py tests/test_level_validation.py
+
+# Start local server:
+.venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+## Frontend commands (current — BATCH-0003 complete)
+
+```bash
+# Run JS engine/physics tests:
+node tools/solve-levels.mjs --mode validity --level 1 --max-states 500
+node tools/solve-levels.mjs --mode validity --level 10 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 14 --max-states 1000000
+node tools/solve-levels.mjs --mode validity --level 13 --max-states 1000000 --debug-trace
+node tests/js/run-tests.mjs
+
+# Start backend server (required for browser play):
+.venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+# then visit: http://127.0.0.1:8000/
+```
+
+Do not run network-backed installs until dependency and network approval are explicitly granted.
+
+## Static web release commands (current — PLAN-0006 local prep complete)
+
+```bash
+# Build the ignored static artifact:
+python3 tools/export_static_site.py
+
+# Validate the static artifact:
+.venv/bin/python -m pytest tests/test_static_export.py
+node tests/js/run-tests.mjs
+python3 -m json.tool dist/static-data/config.json >/dev/null
+python3 -m json.tool dist/static-data/levels.json >/dev/null
+
+# Optional local static preview for human A2 review:
+python3 -m http.server 4173 --directory dist
+# then visit: http://127.0.0.1:4173/
+```
+
+See `docs/deployment/vercel-static-release.md` for the Vercel project settings and domain routing notes. Vercel deployment, DNS, and remote Git publication remain manual A3 steps.
+
+## Common patterns to establish
+
+- Error handling: API errors should return `{ "error": { "code": "...", "message": "..." } }`.
+- Logging: concise request logging with method, path, status, and elapsed time.
+- Configuration: environment variables read through backend settings and shared public constants read from `shared/app_contract.json`.
+- Testing: backend with `pytest`; frontend engine/physics with dependency-light JavaScript tests or an accepted runner.
+- Documentation: update specs/plans or open a Change Request before changing accepted scope.

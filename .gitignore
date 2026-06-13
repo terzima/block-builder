@@ -9,6 +9,9 @@
 *.crt
 secrets.*
 
+# Local app data
+.local/
+
 # OS/editor
 .DS_Store
 Thumbs.db
@@ -23,6 +26,7 @@ Thumbs.db
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 .venv/
 venv/
 .pytest_cache/

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Block Builder</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <main id="app" aria-busy="true" data-app="block-builder">
+      <header class="app-header">
+        <h1>Block Builder</h1>
+      </header>
+
+      <!-- Live status region: announces feedback to screen readers -->
+      <p id="status-region" class="status-region" role="status" aria-live="polite"></p>
+
+      <!-- HUD: level selector, move counter, carrying indicator -->
+      <div class="hud" role="group" aria-label="Game status">
+        <div class="hud-level">
+          <label for="level-select" class="hud-label">Level</label>
+          <select id="level-select" aria-label="Select level"></select>
+        </div>
+        <div class="hud-moves">
+          <span class="hud-label">Moves</span>
+          <span id="moves-count" aria-label="Move count">0</span>
+        </div>
+        <div class="hud-carry">
+          <span id="carried-state" aria-live="polite" aria-label="Carrying state"></span>
+        </div>
+      </div>
+
+      <!-- Game board: cells rendered by renderer.js -->
+      <div
+        id="board"
+        class="board"
+        role="grid"
+        aria-label="Game board"
+        aria-rowcount="6"
+        aria-colcount="8"
+        tabindex="-1"
+      ></div>
+
+      <!-- On-screen controls -->
+      <div class="controls" role="group" aria-label="Game controls">
+        <div class="controls-row">
+          <button class="btn-control" data-action="jump" aria-label="Jump diagonally in facing direction (W / ↑)">
+            ↗ Jump
+          </button>
+        </div>
+        <div class="controls-row">
+          <button class="btn-control" data-action="moveLeft" aria-label="Move left (A / ←)">
+            ← Left
+          </button>
+          <button class="btn-control btn-interact" data-action="interact" aria-label="Pick up or place block (E / Enter)">
+            ⬜ Interact
+          </button>
+          <button class="btn-control" data-action="moveRight" aria-label="Move right (D / →)">
+            Right →
+          </button>
+        </div>
+        <div class="controls-row controls-meta">
+          <!-- BLOCK_BUILDER_DEPLOYED_REMOVE_START: undo-control -->
+          <button class="btn-control btn-meta" data-action="undo" aria-label="Undo last move (Z)">
+            ↩ Undo
+          </button>
+          <!-- BLOCK_BUILDER_DEPLOYED_REMOVE_END: undo-control -->
+          <button class="btn-control btn-meta" data-action="reset" aria-label="Reset level (R)">
+            ⟳ Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- BLOCK_BUILDER_DEPLOYED_REMOVE_START: trace-recorder -->
+      <!-- Manual trace recorder: dev-only export aid, no persistence -->
+      <section id="trace-panel" class="trace-panel" aria-label="Manual trace recorder">
+        <div class="trace-actions">
+          <button id="trace-record-button" class="btn-control btn-meta" type="button">Record</button>
+          <button id="trace-copy-button" class="btn-control btn-meta" type="button" hidden>Copy Trace</button>
+          <button id="trace-download-button" class="btn-control btn-meta" type="button" hidden>Download Trace</button>
+        </div>
+        <p id="trace-status" class="trace-status" role="status" aria-live="polite"></p>
+        <textarea
+          id="trace-output"
+          class="trace-output"
+          aria-label="Completed trace JSON"
+          readonly
+          hidden
+        ></textarea>
+      </section>
+      <!-- BLOCK_BUILDER_DEPLOYED_REMOVE_END: trace-recorder -->
+
+      <!-- Completion dialog -->
+      <div
+        id="completion-dialog"
+        class="completion-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="completion-title"
+        hidden
+      >
+        <div class="dialog-content">
+          <h2 id="completion-title">Level Complete!</h2>
+          <p id="completion-summary"></p>
+          <div class="dialog-actions">
+            <button class="btn-dialog" data-action="nextLevel">Next Level →</button>
+            <button class="btn-dialog btn-secondary" data-action="reset">Replay</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

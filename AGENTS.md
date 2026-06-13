@@ -53,6 +53,26 @@ L2 only when needed:
 
 Do not load unrelated files into context. Do not read the whole repo unless the task is explicitly architectural or the relevant area is unknown.
 
+## Context Handoff Policy
+
+The repo must be resumable from files, not chat history.
+
+New agent sessions should start by reading:
+
+1. `AGENTS.md`
+2. `docs/repo-map.md`
+3. `docs/status/CURRENT_STATE.md`
+4. The active spec/plan/batch listed in `docs/status/CURRENT_STATE.md`
+5. Directly relevant source files
+
+At the end of every meaningful implementation session, the agent must update `docs/status/CURRENT_STATE.md`.
+
+If work is incomplete, interrupted, blocked, or complex enough that the next agent needs a restart package, the agent must create or update a handoff file under `docs/handoff/`.
+
+Handoff files must be concise and must not duplicate full specs, plans, diffs, or chat history.
+
+Store what changes future action, not everything that happened.
+
 ## Bare implementation output
 
 During Implementation mode, do not narrate routine steps. Report only:
@@ -163,6 +183,8 @@ Before completion:
 
 - `docs/project-charter.md`: stable product/project summary.
 - `docs/repo-map.md`: architecture map and commands.
+- `docs/status/CURRENT_STATE.md`: active project dashboard and next-action context.
+- `docs/handoff/`: concise restart packages for incomplete, interrupted, blocked, or complex work.
 - `docs/specs/`: accepted/draft requirements.
 - `docs/plans/`: implementation plans.
 - `docs/change-requests/`: controlled scope changes.
@@ -173,6 +195,18 @@ Before completion:
 ## Large raw overview policy
 
 `docs/intake/PROJECT_OVERVIEW_RAW.md` is source material. Do not load it routinely during implementation. Use seeded docs and active specs/plans instead.
+
+## Template discipline
+
+Specs, plans, and batch plans should contain task-specific implementation truth, not copies of this file.
+
+- Use the repo-local `controlled-planning-docs` skill when writing or revising specs, plans, batch plans, Change Requests, status dashboards, handoffs, repo maps, or other durable project documentation.
+- Reference `AGENTS.md` for operating modes, permissions, approval classes, git rules, hooks, and Change Requests.
+- Put mission-critical reusable rules in `AGENTS.md`; put task-local contracts, interfaces, fixtures, and commands in the spec/plan/batch.
+- Delete template prompts and non-applicable sections before accepting a document.
+- Prefer concise tables, exact file/function/API contracts, and focused task slices over broad prose.
+- Plans should be executable without redesign: name files, public interfaces, validation commands, expected outputs, and stop conditions.
+- Do not paste large source material or long generated logs into specs/plans. Link to durable files and summarize only what implementation needs.
 
 ## Permission Policy
 

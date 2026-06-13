@@ -1,0 +1,467 @@
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Tile colors — light mode */
+  --c-wall:          #2d3748;
+  --c-empty:         #edf2f7;
+  --c-player:        #3182ce;
+  --c-player-carry:  #2b6cb0;
+  --c-block:         #dd6b20;
+  --c-goal:          #38a169;
+  --c-border:        #a0aec0;
+
+  /* UI colors — light mode */
+  --c-bg:            #f6f7f9;
+  --c-surface:       #ffffff;
+  --c-text:          #1f2933;
+  --c-text-subtle:   #4a5568;
+  --c-accent:        #3182ce;
+  --c-btn:           #e2e8f0;
+  --c-btn-hover:     #cbd5e0;
+  --c-btn-active:    #a0aec0;
+  --c-overlay:       rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-wall:          #1a202c;
+    --c-empty:         #2d3748;
+    --c-player:        #63b3ed;
+    --c-player-carry:  #4299e1;
+    --c-block:         #f6ad55;
+    --c-goal:          #68d391;
+    --c-border:        #4a5568;
+
+    --c-bg:            #1a202c;
+    --c-surface:       #2d3748;
+    --c-text:          #f7fafc;
+    --c-text-subtle:   #a0aec0;
+    --c-accent:        #63b3ed;
+    --c-btn:           #4a5568;
+    --c-btn-hover:     #718096;
+    --c-btn-active:    #2d3748;
+    --c-overlay:       rgba(0, 0, 0, 0.65);
+  }
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  display: grid;
+  place-items: start center;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────────── */
+
+#app {
+  width: min(32rem, 100%);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ── Status region ─────────────────────────────────────────────────────────── */
+
+.status-region {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 0.875rem;
+  color: var(--c-text-subtle);
+}
+
+/* ── HUD ───────────────────────────────────────────────────────────────────── */
+
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.hud-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-text-subtle);
+  margin-right: 0.25rem;
+}
+
+.hud-level {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+#level-select {
+  flex: 1;
+  min-width: 0;
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+#level-select:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 1px;
+}
+
+.hud-moves {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+#moves-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 2ch;
+}
+
+.hud-carry {
+  font-size: 0.8rem;
+  color: var(--c-block);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Board ─────────────────────────────────────────────────────────────────── */
+
+.board {
+  display: grid;
+  /* grid-template-columns set dynamically by renderer.js */
+  gap: 1px;
+  background: var(--c-border);
+  border: 2px solid var(--c-border);
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: auto; /* rows are determined by cell count */
+}
+
+/* Suppress the default focus ring on the board element itself.
+   Keyboard focus is still active (tabindex="-1"); the game responds to keys
+   as soon as the board holds focus. We use :focus-visible to keep the ring
+   when navigating by Tab for accessibility. */
+.board:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Cells ─────────────────────────────────────────────────────────────────── */
+
+.cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.cell-wall  { background: var(--c-wall); }
+.cell-empty { background: var(--c-empty); }
+
+.cell-goal {
+  background: var(--c-empty);
+  position: relative;
+}
+/* Goal marker — a small indicator in the center */
+.cell-goal::after {
+  content: '';
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: var(--c-goal);
+  opacity: 0.8;
+}
+
+.cell-player {
+  background: var(--c-player);
+  border-radius: 30%;
+  position: relative;
+}
+
+/* Directional arrow — points in the facing direction.
+   Uses a CSS border-trick triangle so it scales with cell size. */
+.cell-player::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 25% solid transparent;
+  border-bottom: 25% solid transparent;
+}
+
+.cell-player[data-facing="right"]::after {
+  right: 8%;
+  border-left: 28% solid rgba(255, 255, 255, 0.75);
+}
+
+.cell-player[data-facing="left"]::after {
+  left: 8%;
+  border-right: 28% solid rgba(255, 255, 255, 0.75);
+}
+
+/* Carrying state: brighter outline + a small block pip on the facing side */
+.cell-player-carrying {
+  background: var(--c-player-carry);
+  outline: 2px solid var(--c-block);
+  outline-offset: -2px;
+}
+
+.cell-player-carrying::before {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  width: 28%;
+  height: 28%;
+  background: var(--c-block);
+  border-radius: 3px;
+}
+
+.cell-player-carrying[data-carry-side="right"]::before {
+  right: 6%;
+}
+
+.cell-player-carrying[data-carry-side="left"]::before {
+  left: 6%;
+}
+
+.cell-block {
+  background: var(--c-block);
+  border-radius: 4px;
+}
+
+/* ── Controls ──────────────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.controls-row {
+  display: flex;
+  gap: 0.375rem;
+  justify-content: center;
+}
+
+.controls-meta {
+  margin-top: 0.25rem;
+}
+
+.btn-control {
+  appearance: none;
+  background: var(--c-btn);
+  color: var(--c-text);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 4.5rem;
+  transition: background 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.btn-control:hover {
+  background: var(--c-btn-hover);
+}
+
+.btn-control:active {
+  background: var(--c-btn-active);
+  transform: scale(0.97);
+}
+
+.btn-control:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.btn-interact {
+  background: var(--c-block);
+  color: #fff;
+}
+
+.btn-interact:hover  { filter: brightness(1.1); }
+.btn-interact:active { filter: brightness(0.9); }
+
+.btn-meta {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  min-width: 4rem;
+  opacity: 0.85;
+}
+
+/* ── Trace recorder ───────────────────────────────────────────────────────── */
+
+.trace-panel {
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: var(--c-surface);
+  padding: 0.625rem;
+}
+
+.trace-panel-complete {
+  position: fixed;
+  z-index: 110;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(34rem, calc(100% - 2rem));
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.trace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.trace-status {
+  margin: 0.4rem 0 0;
+  min-height: 1.2em;
+  color: var(--c-text-subtle);
+  font-size: 0.8rem;
+}
+
+.trace-output {
+  display: block;
+  width: 100%;
+  min-height: 8rem;
+  max-height: 35dvh;
+  margin-top: 0.5rem;
+  resize: vertical;
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  padding: 0.5rem;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.trace-output[hidden] {
+  display: none;
+}
+
+/* ── Completion dialog ─────────────────────────────────────────────────────── */
+
+.completion-dialog {
+  position: fixed;
+  inset: 0;
+  background: var(--c-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.completion-dialog[hidden] {
+  display: none;
+}
+
+.dialog-content {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  width: min(20rem, calc(100% - 2rem));
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.dialog-content h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.dialog-content p {
+  margin: 0 0 1.25rem;
+  color: var(--c-text-subtle);
+  font-size: 0.9rem;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.btn-dialog {
+  appearance: none;
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.1s;
+  touch-action: manipulation;
+}
+
+.btn-dialog:hover  { filter: brightness(1.1); }
+.btn-dialog:active { filter: brightness(0.9); }
+.btn-dialog:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 3px;
+}
+
+.btn-secondary {
+  background: var(--c-btn);
+  color: var(--c-text);
+}
+
+/* ── Mobile / narrow viewport ──────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  #app {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .btn-control {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.6rem;
+    min-width: 3.75rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+}

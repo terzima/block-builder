@@ -20,9 +20,19 @@ else
 fi
 
 fail=0
+dot='[.]'
+env_file_pattern="(^|/)${dot}env(${dot}|$)"
+allowed_env_sample_pattern="(^|/)${dot}env${dot}example$"
+key_file_pattern="${dot}pem$|${dot}key$|id_rsa|id_ed25519"
 
 echo "Checking for likely secrets and unsafe files..."
-if echo "$changed" | grep -E '(^|/)\.env(\.|$)|\.pem$|\.key$|id_rsa|id_ed25519' >/dev/null; then
+secret_env_files=$(
+  echo "$changed" \
+    | grep -E "$env_file_pattern" \
+    | grep -vE "$allowed_env_sample_pattern" \
+    || true
+)
+if [ -n "$secret_env_files" ] || echo "$changed" | grep -E "$key_file_pattern" >/dev/null; then
   echo "Policy failure: likely secret file included." >&2
   fail=1
 fi

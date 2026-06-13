@@ -1,0 +1,10 @@
+{
+  "name": "block-builder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "python3 tools/export_static_site.py",
+    "test:js": "node tests/js/run-tests.mjs"
+  }
+}

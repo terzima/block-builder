@@ -1,54 +1,91 @@
 # PLAN-XXXX: Title
 
 Status: Draft | Accepted | Completed | Superseded
-Owner: TBD
+Maturity: M3 | M4
+Owner: Unassigned
 Created: YYYY-MM-DD
 Updated: YYYY-MM-DD
 Related spec: `docs/specs/SPEC-XXXX-title.md`
-Related ADRs:
-Related Change Requests:
+Related ADRs: None
+Related Change Requests: None
 
-## Scope
+> Template note: delete guidance text before acceptance. Reference `AGENTS.md` for repo-wide policy; keep this plan focused on exact implementation details.
 
-What will this plan implement?
+**Goal:** One sentence describing the implemented outcome.
+
+**Architecture:** 2-4 sentences naming boundaries, data flow, and why this shape is safe.
+
+**Tech stack:** Existing runtime/libraries and any approved additions.
 
 ## Preconditions
 
-- [ ] Spec accepted.
-- [ ] Worktree/branch created.
-- [ ] Required approvals obtained.
+- [ ] Spec is accepted.
+- [ ] Worktree/branch state is understood.
+- [ ] Required approvals are already granted or explicitly listed as stop points.
 
-## Files expected to change
+## File structure
 
-- `path/to/file`: reason
+- Create: `path/to/file` - responsibility.
+- Modify: `path/to/file` - exact reason.
+- Read first: `path/to/file` - why.
 
-## Implementation steps
+## Contracts to implement
 
-1. Step 1.
-2. Step 2.
-3. Step 3.
+List exact interfaces the worker must preserve or create.
 
-## Test plan
+- Function/class signatures:
+- API routes and response shapes:
+- Data/schema examples:
+- Config/env keys:
+- Error codes/messages:
 
-- Unit tests:
-- Integration tests:
-- Manual checks:
-- Regression checks:
+## Tasks
 
-## Documentation plan
+### Task 0: Preflight
 
-- Docs to update:
+**Files:** None
+
+- [ ] Run:
+
+```bash
+git status --short
+```
+
+- [ ] Confirm accepted scope and note any pre-existing dirty files.
+
+### Task 1: Component Name
+
+**Files:**
+
+- Create/Modify/Test:
+
+- [ ] Write or update the focused failing test/fixture.
+- [ ] Run the smallest relevant check and confirm expected failure.
+- [ ] Implement the minimal scoped change.
+- [ ] Run the focused check and confirm pass.
+- [ ] Update docs only if behavior or commands changed.
+
+## Validation
+
+```bash
+git status --short
+```
+
+Add exact lint/typecheck/test/build commands with expected pass conditions. Include filtered commands for noisy outputs.
+
+## Documentation updates
+
+- Doc update:
 
 ## Rollback plan
 
-How to revert safely.
-
-## Stop conditions requiring Change Request
-
-- Condition 1.
-- Condition 2.
+State the smallest safe revert path.
 
 ## Risks
 
 - Risk:
   - Mitigation:
+
+## Stop conditions
+
+- Stop if:
