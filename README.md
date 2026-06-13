@@ -1,5 +1,6 @@
 # Agentic Coding Starter Kit
 
+This actual needs to get updated but prompting vercel to redeploy
 A reusable starter kit for running agentic software projects with stronger process control, cleaner documentation, safer permissions, and lower token waste.
 
 This repository is not an application template. It is a **project operating system** for agent-assisted development.
