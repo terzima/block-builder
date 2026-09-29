@@ -1,6 +1,6 @@
 # Block Builder
 
-Block Builder is a local-first deterministic grid block puzzle game. The project is managed through controlled specs, implementation plans, and execution batches so application behavior is added in small, reviewable slices. Try it here https://block-builder.terzima.com
+Block Builder is a local-first deterministic grid block puzzle game. The project is managed through controlled specs, implementation plans, and execution batches so application behavior is added in small, reviewable slices. Backend was built for running local more so for an exercise of using APIs rather than it being necessary. Try it here https://block-builder.terzima.com
 
 ## Current Status
 
